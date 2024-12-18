@@ -6,17 +6,29 @@ import { states, Client } from 'minecraft-protocol'
 class WebsocketConnectionSocket extends Socket {
     ws: import('ws').WebSocket
 
-    constructor(ws: import('ws').WebSocket) {
+    constructor(ws: import('ws').WebSocket, versionData) {
         super()
         this.ws = ws
+        let isFirstMessage = true
 
-        this.ws.on('message', data => {
+        this.ws.on('message', (data) => {
+            // if data is string "version" then output info
+            if (isFirstMessage && Buffer.isBuffer(data) && Buffer.from(data).toString() === 'version') {
+                this.ws.send(JSON.stringify(versionData))
+                this.end()
+                return
+            }
+            isFirstMessage = false
             // console.log('message', data)
             this.emit('data', data)
         })
 
         this.ws.on('close', () => {
             this.emit('end')
+        })
+
+        this.on('end', () => {
+            this.ws.close()
         })
 
         this.ws.on('error', err => {
@@ -72,7 +84,13 @@ export default class WebsocketServer extends (ServerDefault as any) {
         // eslint-disable-next-line unicorn/no-this-assignment, @typescript-eslint/no-this-alias
         const self = this
         const _socket = webSocket
-        const socket = new WebsocketConnectionSocket(_socket)
+        const versionData = {
+            time: Date.now(),
+            version: this.version,
+            apiVersion: -1
+            // todo
+        }
+        const socket = new WebsocketConnectionSocket(_socket, versionData)
         //@ts-expect-error
         const client: Client & { id } = new Client(true, this.version, this.customPackets, this.hideErrors)
         //@ts-expect-error

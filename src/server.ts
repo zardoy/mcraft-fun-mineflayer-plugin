@@ -6,6 +6,8 @@ import exitHook from 'exit-hook'
 import ItemLoader from 'prismarine-item'
 
 export const createServerA = (bot: Bot) => {
+    console.log('Starting servers...')
+
     // TODO extract logic so it can be reused on mcraft.fun
     const passthroughPackets = [
         // Entity-related packets
@@ -136,8 +138,8 @@ export const createServerA = (bot: Bot) => {
         },
     })
     void Promise.all([
-        new Promise<void>(resolve => wsServer.once('listening', resolve)),
-        new Promise<void>(resolve => tcpServer.once('listening', resolve)),
+        new Promise<void>(resolve => wsServer.once('listening', resolve)).then(() => console.log('WebSocket server is ready')),
+        new Promise<void>(resolve => tcpServer.once('listening', resolve)).then(() => console.log('TCP server is ready')),
     ]).then(() => {
         console.log(`Viewer servers are ready:`)
         console.log(`Web Link: https://s.mcraft.fun/?viewerConnect=ws://localhost:${WS_PORT}`)
@@ -194,7 +196,7 @@ export const createServerA = (bot: Bot) => {
         }, clients)
     }
 
-    const newConnection = (client) => {
+    const newConnection = (client, isTcp = false) => {
         if (!lastPackets.login) {
             client.end(`Bot was not logged in yet: ${status}`)
             return
@@ -217,7 +219,7 @@ export const createServerA = (bot: Bot) => {
             flyingSpeed: 0
         })
 
-        console.log('sending chunks')
+        console.log(`sending chunks to new client viewer (${isTcp ? 'TCP' : 'WebSocket'})`)
 
         client.write('window_items', {
             windowId: 0,
@@ -276,8 +278,8 @@ export const createServerA = (bot: Bot) => {
             updateSlot([client])
         })
     };
-    tcpServer.on('playerJoin', newConnection)
-    wsServer.on('playerJoin', newConnection)
+    tcpServer.on('playerJoin', client => newConnection(client, true))
+    wsServer.on('playerJoin', client => newConnection(client, false))
 
     bot.on('move', () => {
         updatePosition()
@@ -303,6 +305,8 @@ export const createServerA = (bot: Bot) => {
         }
     }
 
+    // todo patch _client instead
+    // todo patch swingArm
     hookMethod('closeWindow', () => {
         writeClients('closeWindow', {
             windowId: 0
@@ -311,6 +315,11 @@ export const createServerA = (bot: Bot) => {
 
     hookMethod('setQuickBarSlot', () => {
         updateSlot()
+    })
+
+    bot.on('end', () => {
+        tcpServer?.close()
+        wsServer?.close()
     })
 
     exitHook(() => {

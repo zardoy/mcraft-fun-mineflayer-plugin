@@ -6,7 +6,8 @@
     "description": "Mineflayer viewer (connector) for mcraft.fun project and vanilla Minecraft client! Both TCP and WebSockets servers are supported.",
     "scripts": {
         "watch": "tsc --watch",
-        "build": "tsc"
+        "build": "tsc",
+        "test-local": "tsx watch example/simple.ts"
     },
     "peerDependencies": {
         "@roamhq/wrtc": "*",

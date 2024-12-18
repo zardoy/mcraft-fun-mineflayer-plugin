@@ -1,13 +1,14 @@
-import webConnector from '../src/index'
-import {createServerA} from '../src/server'
+import viewerConnector from '../src/index'
 import { createBot } from 'mineflayer'
 
 const bot = createBot({
     // host: 'kaboom.pw',
 
     port: 25569,
-    username: 'test',
+    username: 'dklj',
 })
+
+bot.loadPlugin(viewerConnector())
 
 bot._client.on('connect', () => {
     console.log('connected')
@@ -34,6 +35,7 @@ bot.on('resourcePack', (url) => {
 })
 
 setInterval(() => {
+    if (!bot.controlState) return
     if (bot.controlState.forward) {
         bot.controlState.forward = false
         bot.controlState.back = true
@@ -42,7 +44,5 @@ setInterval(() => {
         bot.controlState.back = false
     }
 }, 5000)
-
-bot.loadPlugin(createServerA)
 
 console.log('bot started')

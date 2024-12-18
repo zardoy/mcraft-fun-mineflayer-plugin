@@ -5,8 +5,8 @@
     "license": "MIT",
     "description": "Mineflayer viewer (connector) for mcraft.fun project and vanilla Minecraft client! Both TCP and WebSockets servers are supported.",
     "scripts": {
-        "watch": "tsx --watch",
-        "build": "tsx"
+        "watch": "tsc --watch",
+        "build": "tsc"
     },
     "peerDependencies": {
         "@roamhq/wrtc": "*",

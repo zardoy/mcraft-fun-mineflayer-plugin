@@ -219,14 +219,14 @@ export const createServerA = (bot: Bot) => {
             flyingSpeed: 0
         })
 
-        console.log(`sending chunks to new client viewer (${isTcp ? 'TCP' : 'WebSocket'})`)
-
         client.write('window_items', {
             windowId: 0,
             stateId: 1,
             items: bot.inventory.slots.map(item => Item.toNotch(item)),
-            carriedItem: { present: false }
+            carriedItem: Item.toNotch(bot.heldItem)
         })
+
+        console.log(`sending chunks to new client viewer (${isTcp ? 'TCP' : 'WebSocket'})`)
 
         const botChunk = bot.entity.position.floored().scale(1 / 16).floored()
         for (const [xRel, zRel] of generateSpiralMatrix(8)) {

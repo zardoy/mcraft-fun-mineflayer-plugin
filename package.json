@@ -1,0 +1,53 @@
+{
+    "name": "mcraft-fun-mineflayer",
+    "version": "0.0.0-dev",
+    "author": "Vitaly Turovsky <vital2580@icloud.com>",
+    "license": "MIT",
+    "description": "Mineflayer viewer (connector) for mcraft.fun project and vanilla Minecraft client! Both TCP and WebSockets servers are supported.",
+    "scripts": {
+        "watch": "tsx --watch",
+        "build": "tsx"
+    },
+    "peerDependencies": {
+        "@roamhq/wrtc": "*",
+        "mineflayer": ">=4.x"
+    },
+    "peerDependenciesMeta": {
+        "@roamhq/wrtc": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "@types/ws": "^8.5.13",
+        "@zardoy/tsconfig": "^1.5.1",
+        "mineflayer": "^4.23.0",
+        "typescript": "^5.7.2"
+    },
+    "dependencies": {
+        "@roamhq/wrtc": "^0.8.0",
+        "@zardoy/flying-squid": "^0.0.49",
+        "exit-hook": "2.2.1",
+        "minecraft-protocol": "^1.51.0",
+        "peerjs": "^1.5.4",
+        "prismarine-item": "^1.15.0",
+        "ws": "^8.18.0"
+    },
+    "keywords": [
+        "minecraft",
+        "mineflayer",
+        "mcraft",
+        "mcraft.fun",
+        "web",
+        "viewer",
+        "connector",
+        "protocol",
+        "server",
+        "passthrough",
+        "packets",
+        "relay",
+        "retransmit",
+        "prismarine",
+        "prismarine-viewer",
+        "mcraft-fun"
+    ]
+}

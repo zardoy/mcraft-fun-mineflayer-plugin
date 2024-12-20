@@ -1,9 +1,11 @@
 {
     "extends": "@zardoy/tsconfig/tsconfig",
     "compilerOptions": {
+        "target": "ES2022",
         "noEmit": false,
         "declaration": true,
         "outDir": "build",
+        "module": "CommonJS",
     },
     "include": [
         "src"

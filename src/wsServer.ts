@@ -3,6 +3,10 @@ import { WebSocketServer } from 'ws'
 import ServerDefault from 'minecraft-protocol/src/server'
 import { states, Client } from 'minecraft-protocol'
 
+const clientIgnoredPackets = [
+    'position'
+]
+
 class WebsocketConnectionSocket extends Socket {
     ws: import('ws').WebSocket
 

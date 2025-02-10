@@ -4,120 +4,12 @@ import { generateSpiralMatrix } from '@zardoy/flying-squid/dist/utils'
 import WebsocketServer from './wsServer'
 import exitHook from 'exit-hook'
 import ItemLoader from 'prismarine-item'
+import { passthroughPackets } from './packetsProxyConfiguration'
 
 export const createServerA = (bot: Bot) => {
     console.log('Starting servers...')
 
     // TODO extract logic so it can be reused on mcraft.fun
-    const passthroughPackets = [
-        // Entity-related packets
-        'named_entity_spawn',
-        'spawn_entity', // TODO re-capture
-        'spawn_entity_living',
-        'spawn_entity_painting',
-        'spawn_entity_experience_orb',
-        'entity_velocity',
-        'destroy_entity',
-        'rel_entity_move',
-        'entity_look',
-        'entity_move_look',
-        'entity_teleport',
-        'entity_metadata',
-        'entity_status',
-        'attach_entity',
-        'entity_effect',
-        'remove_entity_effect',
-        'experience',
-
-        // World and block updates
-        'map_chunk',
-        'multi_block_change',
-        'block_change',
-        'block_action',
-        'block_break_animation',
-        'explosion',
-        'world_event',
-
-        // Player and health updates
-        'player_info',
-        'update_health',
-        'respawn',
-        'position',
-        'held_item_slot',
-
-        // Time update
-        'update_time',
-
-        // Inventory and window updates
-        'set_slot',
-        'window_items',
-
-        // Sound and particle effects
-        'named_sound_effect',
-        'sound_effect',
-        'entity_sound_effect',
-        'world_particles',
-
-        // Scoreboard
-        'scoreboard_objective',
-        'scoreboard_score',
-        'scoreboard_display_objective',
-
-        // Teams
-        'teams',
-
-        // Additional gameplay features
-        'statistics',
-        'abilities',
-        'unlock_recipes',
-        'declare_commands',
-        'tags',
-
-        // Misc
-        'open_window',
-        'close_window',
-        'custom_payload',
-        'kick_disconnect',
-        'game_state_change',
-
-        'chat', // todo re-capture
-        'difficulty',
-        'title',
-        'clear_titles',
-        'initialize_world_border',
-        'world_border_center',
-        'world_border_lerp_size',
-        'world_border_size',
-        'world_border_warning_delay',
-        'world_border_warning_reach',
-        'set_title_subtitle',
-        'set_title_text',
-        'set_title_time',
-        'simulation_distance',
-        'player_chat',
-        'system_chat',
-        'server_data', // todo might not need,
-        'chat_suggestions',
-        'hide_message',
-        'profileless_chat',
-        'player_remove',
-        'feature_flags',
-        'chunk_biomes',
-        'damage_event',
-        'hurt_animation',
-
-        'bed',
-        'map_chunk_bulk',
-        'update_sign',
-        'world_border',
-        'set_compression',
-        'update_entity_nbt',
-        'combat_event',
-        'transaction',
-        'entity_destroy', // Replaced with 'destroy_entity' in the list
-        'spawn_entity_weather',
-        //   'open_sign_entity' // Updated in later versions
-    ];
 
     const Item = ItemLoader(bot.version)
 

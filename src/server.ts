@@ -4,15 +4,29 @@ import { generateSpiralMatrix } from '@zardoy/flying-squid/dist/utils'
 import WebsocketServer from './wsServer'
 import exitHook from 'exit-hook'
 import ItemLoader from 'prismarine-item'
-import { passthroughPackets } from './packetsProxyConfiguration'
+import { passthroughPackets } from './generalPacketsProxy'
+import { MineflayerPacketHandler } from './mineflayerPacketHandler'
 
-export const createServerA = (bot: Bot) => {
+export interface MineflayerPluginSettings {
+    /** @default 25587 */
+    websocketPort?: number
+    websocketHost?: string
+    /** @default true */
+    websocketEnabled?: boolean
+    /** @default 25587 */
+    tcpPort?: number
+    tcpHost?: string
+    /** @default true */
+    tcpEnabled?: boolean
+
+    resourcePack?: string
+    // resourcePackBehavior?: 'server-first' | 'server-last'
+}
+
+export const createMineflayerPluginServer = (bot: Bot) => {
     console.log('Starting servers...')
 
-    // TODO extract logic so it can be reused on mcraft.fun
-
-    const Item = ItemLoader(bot.version)
-
+    // #region start servers
     const TCP_PORT = 25587
     const WS_PORT = 25588
     const tcpServer = createServer({
@@ -37,25 +51,9 @@ export const createServerA = (bot: Bot) => {
         console.log(`Web Link: https://s.mcraft.fun/?viewerConnect=ws://localhost:${WS_PORT}`)
         console.log(`TCP (Vanilla Minecraft): localhost:${TCP_PORT} (${bot.version})`)
     })
+    // #endregion
 
-    let status = ''
-    const lastPackets = {
-        login: null as any,
-    }
-
-    bot.on('resourcePack', (url) => {
-        status = 'Bot is waiting for resource pack to be accepted'
-    })
-
-    bot._client.on('login', (packet) => {
-        status = ''
-        lastPackets.login = packet
-    })
-    bot._client.on('respawn', (packet) => {
-        // status = 'Bot is respawning'
-    })
-
-    const writeClients = (name, data, clients?) => {
+    const writeClients = (name: string, data: any, clients?: any[]) => {
         if (clients) {
             for (const client of clients) {
                 client.write(name, data)
@@ -66,98 +64,27 @@ export const createServerA = (bot: Bot) => {
             wsServer?.writeToClients(getClients(wsServer.clients), name, data)
         }
     }
-    const updateSlot = (clients?) => {
-        writeClients('held_item_slot', { slot: bot.quickBarSlot }, clients)
-    }
-    const updateHealth = (clients?) => {
-        writeClients('update_health', {
-            food: bot.food,
-            foodSaturation: bot.foodSaturation,
-            health: bot.health
-        }, clients)
-    }
-    const updatePosition = (clients?) => {
-        writeClients('position', {
-            x: bot.entity.position.x,
-            y: bot.entity.position.y,
-            z: bot.entity.position.z,
-            yaw: bot.entity.yaw,
-            pitch: bot.entity.pitch,
-            flags: 0x00,
-            teleportId: 1
-        }, clients)
-    }
 
-    const newConnection = (client, isTcp = false) => {
-        if (!lastPackets.login) {
-            client.end(`Bot was not logged in yet: ${status}`)
-            return
-        }
-        lastPackets.login.gameMode = bot.player.gamemode
-        client.write('login', lastPackets.login)
+    const packetHandler = new MineflayerPacketHandler(bot, {
+        writeToAuxClients(name, data) {
+            writeClients(name, data)
+        },
+    })
 
-        // client.write('spawn_position', {
-        //     location: bot.entity.position,
-        //     angle: 0,
-        // })
 
-        updateSlot([client])
-        updatePosition([client])
-        updateHealth([client])
+    bot.on('resourcePack', (url) => {
+        packetHandler.loginState = 'Bot is waiting for resource pack to be accepted'
+    })
 
-        client.write('abilities', {
-            flags: 0,
-            walkingSpeed: 0,
-            flyingSpeed: 0
-        })
+    bot._client.on('login', (packet) => {
+        packetHandler.loginState = ''
+    })
+    bot._client.on('respawn', (packet) => {
+        // packetHandler.loginState = 'Bot is respawning'
+    })
 
-        client.write('window_items', {
-            windowId: 0,
-            stateId: 1,
-            items: bot.inventory.slots.map(item => Item.toNotch(item)),
-            carriedItem: Item.toNotch(bot.heldItem)
-        })
-
-        console.log(`sending chunks to new client viewer (${isTcp ? 'TCP' : 'WebSocket'})`)
-
-        const botChunk = bot.entity.position.floored().scale(1 / 16).floored()
-        for (const [xRel, zRel] of generateSpiralMatrix(8)) {
-            const x = xRel + botChunk.x;
-            const z = zRel + botChunk.z;
-            const chunk = bot.world.getColumn(x, z) as any
-            if (!chunk) continue
-            const dumpedLights = chunk.dumpLight()
-            const newLightsFormat = bot.supportFeature('newLightingDataFormat')
-            const newLightsData = newLightsFormat ? { skyLight: dumpedLights.skyLight, blockLight: dumpedLights.blockLight } : undefined
-            const chunkBuffer = chunk.dump()
-            const bitMap = chunk.getMask()
-            client.write('map_chunk', {
-                x,
-                z,
-                groundUp: bitMap !== undefined ? true : undefined,
-                //note: it's a flag that tells the client to trust the edges of the chunk, meaning that the client can render the chunk without having to wait for the edges to be sent
-                trustEdges: true, // should be false when a chunk section is updated instead of the whole chunk being overwritten, do we ever do that?
-                bitMap: bitMap,
-                biomes: chunk.dumpBiomes(),
-                ignoreOldData: true, // should be false when a chunk section is updated instead of the whole chunk being overwritten, do we ever do that?
-                heightmaps: {
-                    type: 'compound',
-                    name: '',
-                    value: {
-                        MOTION_BLOCKING: { type: 'longArray', value: new Array(bot.supportFeature('dimensionDataIsAvailable') ? 37 : 36).fill([0, 0]) }, // must be
-                        WORLD_SURFACE: { type: 'longArray', value: new Array(bot.supportFeature('dimensionDataIsAvailable') ? 37 : 36).fill([0, 0]) },
-                    }
-                }, // FIXME: fake heightmap
-                chunkData: chunkBuffer,
-                blockEntities: [],
-                skyLightMask: chunk.skyLightMask,
-                // skyLightMask: [chunk.skyLightMask.data],
-                emptySkyLightMask: chunk.emptySkyLightMask,
-                blockLightMask: chunk.blockLightMask,
-                emptyBlockLightMask: chunk.emptyBlockLightMask,
-                ...newLightsData
-            })
-        }
+    const newConnection = (client: any, isTcp = false) => {
+        packetHandler.handleNewConnection(client)
 
         client.on('systemChat', (message) => {
             client.write('chat', {
@@ -167,26 +94,12 @@ export const createServerA = (bot: Bot) => {
             })
         })
         client.on('held_item_slot', () => {
-            updateSlot([client])
-        })
-    };
-    tcpServer.on('playerJoin', client => newConnection(client, true))
-    wsServer.on('playerJoin', client => newConnection(client, false))
-
-    bot.on('move', () => {
-        updatePosition()
-        updateHealth()
-    })
-    bot.on('health', () => {
-        updatePosition()
-    })
-
-    for (const passthroughPacket of passthroughPackets) {
-        bot._client.on(passthroughPacket, (data) => {
-            // todo send raw packet data instead
-            writeClients(passthroughPacket, data)
+            packetHandler.updateSlot([client])
         })
     }
+
+    tcpServer.on('playerJoin', client => newConnection(client, true))
+    wsServer.on('playerJoin', client => newConnection(client, false))
 
     const hookMethod = <T extends keyof Bot>(_name: T, callback: Function) => {
         const name = _name as string
@@ -197,7 +110,6 @@ export const createServerA = (bot: Bot) => {
         }
     }
 
-    // todo patch _client instead
     // todo patch swingArm
     hookMethod('closeWindow', () => {
         writeClients('closeWindow', {
@@ -206,7 +118,7 @@ export const createServerA = (bot: Bot) => {
     })
 
     hookMethod('setQuickBarSlot', () => {
-        updateSlot()
+        packetHandler.updateSlot()
     })
 
     bot.on('end', () => {

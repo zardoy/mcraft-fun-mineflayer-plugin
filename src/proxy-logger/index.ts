@@ -1,6 +1,6 @@
 import { Client, createClient, createServer, Server, ServerClient, states, States } from 'minecraft-protocol'
 import { createPacketsStudioServer, handlePacket as wsHandlePacket, handleClientDisconnect } from './studioServer'
-import { handleAuxClientsProxy } from '../packetsProxyConfiguration'
+import { handleAuxClientsProxyVanilla } from './vanillaAuxClients'
 
 const username = process.argv[2] || 'hiall2'
 const connection = process.argv[3] || 'grim.mcraft.fun'
@@ -34,7 +34,7 @@ export const createProxyServer = () => {
 
     const auxClients = [] as Client[]
     let serverClient: Client | undefined
-    let auxHelpers: ReturnType<typeof handleAuxClientsProxy> | undefined
+    let auxHelpers: ReturnType<typeof handleAuxClientsProxyVanilla> | undefined
     let targetClientConnectionIndex: number | undefined
 
     const startTargetClient = () => {
@@ -46,7 +46,7 @@ export const createProxyServer = () => {
             username,
         })
 
-        auxHelpers = handleAuxClientsProxy(serverClient, {
+        auxHelpers = handleAuxClientsProxyVanilla(serverClient, {
             auxClients
         })
     }

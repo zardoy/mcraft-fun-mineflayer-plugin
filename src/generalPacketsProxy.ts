@@ -112,9 +112,13 @@ export const passthroughPackets = [
 ];
 
 
-export const handleAuxClientsProxy = (serverConnection: Client, state: {
-    auxClients: Client[]
-}) => {
+export type AuxClientsState = {
+    auxClients?: Client[];
+    writeToAuxClients?: (name: string, data: any) => void;
+};
+
+export const handleAuxClientsProxy = (serverConnection: Client, state: AuxClientsState) => {
+    if (!state.auxClients && !state.writeToAuxClients) throw new Error('No aux clients or writeToAuxClients provided')
     const lastPackets = {
         login: null as any,
         position: null as any,
@@ -130,10 +134,17 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: {
         lastPackets[name] = data
     })
 
-    const writeToAuxClients = (name: string, data: any) => {
-        state.auxClients.forEach(client => {
-            client.write(name, data)
-        })
+    const writeToAuxClients = (name: string, data: any, clients?: Client[]) => {
+        if (clients) {
+            clients.forEach(client => {
+                client.write(name, data)
+            })
+        } else {
+            state.auxClients?.forEach(client => {
+                client.write(name, data)
+            })
+            state.writeToAuxClients?.(name, data)
+        }
     }
 
     for (const passthroughPacket of passthroughPackets) {
@@ -156,6 +167,32 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: {
             Object.assign(lastPackets.position, data)
             writePosition()
         }
+
+        if (name === 'block_dig') {
+            if (data.status === 0) {
+                // start digging
+                writeToAuxClients('block_break_animation', {
+                    location: data.location,
+                    progress: 0,
+                    entityId: lastPackets.login.entityId
+                })
+            }
+            if (data.status === 1) {
+                // stop digging
+                writeToAuxClients('block_break_animation', {
+                    location: data.location,
+                    progress: -1,
+                    entityId: lastPackets.login.entityId
+                })
+            }
+        }
+
+        if (name === 'arm_animation') {
+            writeToAuxClients('animation', {
+                entityId: lastPackets.login.entityId,
+                animation: data.hand === 0 ? 0 : 1
+            })
+        }
     }
 
     const writePosition = () => {
@@ -166,28 +203,7 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: {
         })
     }
 
-    const writeHealth = () => {
-        writeToAuxClients('update_health', {
-            food: 20,
-            foodSaturation: 5,
-            health: 20
-        })
-    }
-
-    const worldChunks = {} as Record<string, any>
-
-    const writeWorldChunks = () => {
-        for (const item of Object.values(worldChunks)) {
-            writeToAuxClients('map_chunk', item)
-        }
-    }
-
-    serverConnection.on('map_chunk', (data) => {
-        worldChunks[`${data.x}_${data.z}`] = data
-    })
-
     const Item = PrismarineItem(serverConnection.version)
-
 
     const onNewAuxConnection = (client: Client) => {
         if (!lastPackets.login) {
@@ -205,13 +221,6 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: {
 
         writeToAuxClients('held_item_slot', { slot: 0 })
         writePosition()
-        writeHealth()
-
-        client.write('abilities', {
-            flags: 0,
-            walkingSpeed: 0,
-            flyingSpeed: 0
-        })
 
         client.write('window_items', {
             windowId: 0,
@@ -219,15 +228,13 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: {
             items: [].map(item => Item.toNotch(item)),
             carriedItem: Item.toNotch(null)
         })
-
-        setTimeout(() => {
-            writeWorldChunks()
-        }, 1000)
     }
 
     return {
         lastPackets,
         onNewAuxConnection,
         writeMainClientPackets,
+        writeToAuxClients,
+        Item
     }
 }

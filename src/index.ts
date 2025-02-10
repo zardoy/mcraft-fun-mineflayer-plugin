@@ -1,7 +1,5 @@
-// export { createServerA as default } from './server';
-
-import { createServerA } from './server'
+import { createMineflayerPluginServer } from './server'
 
 export default () => {
-    return createServerA
+    return createMineflayerPluginServer
 }

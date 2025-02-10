@@ -1,5 +1,7 @@
 # Mineflayer Web Viewer
 
+![minecraft-web-viewer-chrome-mac](demo.webp)
+
 Viewer for Vanilla clients & [mcraft.fun](https://mcraft.fun) ([repo](https://github.com/zardoy/minecraft-web-client)) project.
 
 ## Features

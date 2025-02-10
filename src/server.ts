@@ -8,6 +8,9 @@ import { passthroughPackets } from './generalPacketsProxy'
 import { MineflayerPacketHandler } from './mineflayerPacketHandler'
 import { registerCustomChannel, UIDefinition, UiLilDef } from './customChannel'
 import { networkInterfaces } from 'os'
+import { readFileSync } from 'fs'
+import { createServer as createHttpsServer } from 'https'
+import { generateSelfSignedCertificate } from './ssl'
 
 export interface MineflayerPluginSettings {
     /** @default 25587 */
@@ -15,6 +18,17 @@ export interface MineflayerPluginSettings {
     websocketHost?: string
     /** @default true */
     websocketEnabled?: boolean
+    /** SSL configuration for WebSocket server */
+    ssl?: {
+        /** @default false */
+        enabled?: boolean
+        /** @default false - if true, will use a self-signed certificate */
+        selfSigned?: boolean
+        /** Path to SSL certificate file */
+        cert?: string
+        /** Path to SSL private key file */
+        key?: string
+    }
     /** @default 25587 */
     tcpPort?: number
     tcpHost?: string
@@ -51,6 +65,7 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
 
     let tcpServer: Server | undefined
     let wsServer: Server | undefined
+    let httpsServer: Server | undefined
 
     if (options.tcpEnabled !== false) {
         if (options.password) {
@@ -66,15 +81,55 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
     }
 
     if (options.websocketEnabled !== false) {
-        wsServer = createServer({
-            "online-mode": false,
-            version: bot.version,
-            Server: WebsocketServer as any,
-            port: WS_PORT,
-            host: WS_HOST,
-            customPackets: {
-            },
-        })
+        let httpsServer
+        if (options.ssl?.enabled) {
+            let sslOptions
+            if (options.ssl.selfSigned) {
+                sslOptions = generateSelfSignedCertificate()
+            } else if (options.ssl.cert && options.ssl.key) {
+                sslOptions = {
+                    cert: readFileSync(options.ssl.cert),
+                    key: readFileSync(options.ssl.key)
+                }
+            } else {
+                console.warn('SSL is enabled but no certificate provided. Falling back to non-SSL.')
+            }
+
+            if (sslOptions) {
+                httpsServer = createHttpsServer(sslOptions)
+                wsServer = createServer({
+                    "online-mode": false,
+                    version: bot.version,
+                    Server: WebsocketServer as any,
+                    port: WS_PORT,
+                    host: WS_HOST,
+                    customPackets: {},
+                    beforePing: (params: any) => {
+                        params.server = httpsServer
+                        return params
+                    }
+                })
+                httpsServer.listen(WS_PORT, WS_HOST)
+            } else {
+                wsServer = createServer({
+                    "online-mode": false,
+                    version: bot.version,
+                    Server: WebsocketServer as any,
+                    port: WS_PORT,
+                    host: WS_HOST,
+                    customPackets: {},
+                })
+            }
+        } else {
+            wsServer = createServer({
+                "online-mode": false,
+                version: bot.version,
+                Server: WebsocketServer as any,
+                port: WS_PORT,
+                host: WS_HOST,
+                customPackets: {},
+            })
+        }
         wsServer['options'] = options
     }
 
@@ -91,8 +146,12 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
         if (options.showConnectionInstructions !== false) {
             const defaultIp = getDefaultIp()
             if (wsServer) {
-                const wsDisplayHost = WS_HOST ?? defaultIp
-                console.log(`Web Link: https://s.mcraft.fun/?viewerConnect=ws://${wsDisplayHost}:${WS_PORT}`)
+                const wsDisplayHost = WS_HOST ?? (!options.ssl?.enabled ? 'localhost' : defaultIp)
+                const protocol = options.ssl?.enabled ? 'wss' : 'ws'
+                console.log(`Web Link: https://s.mcraft.fun/?viewerConnect=${protocol}://${wsDisplayHost}:${WS_PORT}`)
+                if (!options.ssl?.enabled) {
+                    console.log('Use SSL cert or tunnel to connect from outside the network')
+                }
             }
             if (tcpServer) {
                 const tcpDisplayHost = TCP_HOST ?? defaultIp
@@ -200,11 +259,13 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
     bot.on('end', () => {
         tcpServer?.close()
         wsServer?.close()
+        if (httpsServer) httpsServer.close()
     })
 
     exitHook(() => {
         tcpServer?.close()
         wsServer?.close()
+        if (httpsServer) httpsServer.close()
     })
 
 

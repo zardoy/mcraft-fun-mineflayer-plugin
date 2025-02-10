@@ -90,4 +90,4 @@ setTimeout(() => {
 
 We don't provide built-in headless web client functionality, but you can use Puppeteer or similar browser automation tools to capture screenshots or video streams from the web viewer interface.
 
-Example using Puppeteer:
+See [example/headless.js](example/headless.js) for an example of how to use Puppeteer to capture a video stream from the web viewer!

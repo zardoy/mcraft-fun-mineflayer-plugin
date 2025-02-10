@@ -102,14 +102,14 @@ export const entityReplicator = (bot: Bot) => {
 
         // Handle spawn packets
         if (packetType.startsWith('spawn_') || packetType === 'named_entity_spawn') {
-            entities.set(entityId, {
+            entities.set(`${entityId}`, {
                 spawnState: new EntitySpawnState(packetType, packet),
                 additional: new EntityAdditionalState(entityId)
             });
             return;
         }
 
-        const entity = entities.get(entityId);
+        const entity = entities.get(`${entityId}`);
         if (!entity) return;
 
         // Check if it's a spawn-modifying packet
@@ -122,7 +122,7 @@ export const entityReplicator = (bot: Bot) => {
         }
     }
 
-    function getAllEntityPackets(entityId) {
+    function getAllEntityPackets(entityId: string) {
         const entity = entities.get(entityId);
         if (!entity) return [] as [string, any][];
 
@@ -151,7 +151,6 @@ export const entityReplicator = (bot: Bot) => {
     return {
         onClientJoin(client: Client) {
             for (const [id, entity] of Object.entries(bot.entities)) {
-                if (String(id) === String(bot.entity.id)) continue
                 const entityPackets = getAllEntityPackets(id)
                 for (const [packetType, packet] of entityPackets) {
                     client.write(packetType, packet)

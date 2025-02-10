@@ -211,13 +211,6 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
 
         packetHandler.handleNewConnection(client)
 
-        client.on('systemChat', (message) => {
-            client.write('chat', {
-                message: message.formattedMessage,
-                position: 0,
-                sender: bot.username
-            })
-        })
         client.on('held_item_slot', () => {
             packetHandler.updateSlot([client])
         })
@@ -229,6 +222,17 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
             })
             client.on('chat_message', ({ message }) => {
                 bot.chat(message)
+            })
+            client.on('chat_command', ({ command }) => {
+                bot.chat(`/${command}`)
+            })
+            client.on('tab_complete', (packet) => {
+                bot._client.write('tab_complete', packet)
+                let start = Date.now()
+                bot._client.once('tab_complete', (packet) => {
+                    if (Date.now() - start > 5000) return
+                    client.write('tab_complete', packet)
+                })
             })
         }
     }
@@ -391,19 +395,23 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
             // const allowMethods = options.allowMethods;
             const allowMethods = true
             if (allowMethods) {
-                const result = bot[packet.method](...packet.args)
-                if (result instanceof Promise) {
-                    result.then(result => {
+                try {
+                    const result = bot[packet.method](...packet.args)
+                    if (result instanceof Promise) {
+                        result.then(result => {
+                            customChannel.send({
+                                type: 'method',
+                                result: result
+                            })
+                        })
+                    } else {
                         customChannel.send({
                             type: 'method',
                             result: result
                         })
-                    })
-                } else {
-                    customChannel.send({
-                        type: 'method',
-                        result: result
-                    })
+                    }
+                } catch (err) {
+                    bot.emit('error', err)
                 }
             }
         }
@@ -412,11 +420,19 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
             if (lil) {
                 const oldValue = lil.params[packet.param];
                 if (typeof oldValue === 'function') {
-                    oldValue()
+                    try {
+                        oldValue()
+                    } catch (err) {
+                        bot.emit('error', err)
+                    }
                 } else {
                     if (lil.onUpdate) {
                         lil.params[packet.param] = packet.value
-                        lil.onUpdate(packet.param, packet.value, oldValue)
+                        try {
+                            lil.onUpdate(packet.param, packet.value, oldValue)
+                        } catch (err) {
+                            bot.emit('error', err)
+                        }
                     } else {
                         lil.params[packet.param] = packet.value
                     }

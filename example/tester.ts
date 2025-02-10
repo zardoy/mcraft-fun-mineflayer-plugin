@@ -17,6 +17,7 @@ const bot = createBot({
 bot.loadPlugin(viewerConnector({
     sendConsole: true,
     allowEval: true,
+    forwardChat: true,
 }))
 
 bot._client.on('connect', () => {
@@ -37,6 +38,16 @@ bot.on('spawn', () => {
 })
 bot.on('login', () => {
     console.log('logined')
+})
+
+bot.on('diggingCompleted', () => {
+    console.log('diggingCompleted')
+})
+bot.on('diggingAborted', () => {
+    console.log('diggingAborted')
+})
+bot.on('chat', (message) => {
+    console.log('chat', message)
 })
 
 bot.on('resourcePack', (url) => {
@@ -66,18 +77,26 @@ onReady(bot).then(() => {
                         return b.name.includes('grass')
                     }
                 })
+                console.log('Now looking at', block.name)
                 bot.lookAt(block.position)
             },
             lookAtBlockBelow() {
                 block = bot.world.getBlock(bot.entity.position.offset(0, -1, 0))
+                console.log('Now looking at', block.name)
                 bot.lookAt(block.position)
             },
             startDigging() {
-                bot.dig(block.position)
+                bot.dig(block)
             },
             stopDigging() {
                 bot.stopDigging()
-            }
+            },
+            activateItem() {
+                bot.activateItem()
+            },
+            // placeBlock() {
+            //     // bot.placeBlock(block)
+            // }
         }, {
             // Optional callback when values change
             onUpdate(id, newValue) {

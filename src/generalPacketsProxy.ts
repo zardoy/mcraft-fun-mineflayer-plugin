@@ -124,6 +124,9 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: AuxClient
         position: null as any,
         player_info: null as any,
     }
+    const firstPackets = {
+        player_info: null as any,
+    }
 
     serverConnection.on('login', (packet) => {
         lastPackets.login = packet
@@ -132,6 +135,11 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: AuxClient
     serverConnection.on('packet', (data, { name }) => {
         if (!(name in lastPackets)) return
         lastPackets[name] = data
+    })
+
+    serverConnection.on('packet', (data, { name }) => {
+        if (!(name in firstPackets)) return
+        firstPackets[name] ??= data
     })
 
     const writeToAuxClients = (name: string, data: any, clients?: Client[]) => {
@@ -212,6 +220,7 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: AuxClient
         }
 
         client.write('login', lastPackets.login)
+        client.write('player_info', firstPackets.player_info)
         client.write('player_info', lastPackets.player_info)
 
         // client.write('spawn_position', {

@@ -1,14 +1,24 @@
-import viewerConnector from '../src/index'
+import viewerConnector, { onReady } from '../src/index'
 import { createBot } from 'mineflayer'
+import dotenv from 'dotenv'
+import chalk from 'chalk'
+
+dotenv.config({
+    path: '.env.local',
+})
 
 const bot = createBot({
-    // host: 'kaboom.pw',
+    host: process.env.HOST,
 
-    port: 25569,
+    // port: 25569,
     username: 'dklj',
 })
 
-bot.loadPlugin(viewerConnector())
+bot.loadPlugin(viewerConnector({
+    sendConsole: true,
+    allowEval: true,
+    password: '1',
+}))
 
 bot._client.on('connect', () => {
     console.log('connected')
@@ -34,15 +44,31 @@ bot.on('resourcePack', (url) => {
     bot.acceptResourcePack()
 })
 
-setInterval(() => {
-    if (!bot.controlState) return
-    if (bot.controlState.forward) {
-        bot.controlState.forward = false
-        bot.controlState.back = true
-    } else {
-        bot.controlState.forward = true
-        bot.controlState.back = false
-    }
-}, 5000)
+// setInterval(() => {
+//     if (!bot.controlState) return
+//     if (bot.controlState.forward) {
+//         bot.controlState.forward = false
+//         bot.controlState.back = true
+//     } else {
+//         bot.controlState.forward = true
+//         bot.controlState.back = false
+//     }
+// }, 5000)
 
 console.log('bot started')
+
+onReady(bot).then(() => {
+    bot.webViewer.ui.updateUI('status', {
+        type: 'text',
+        x: 10,
+        y: 10,
+        text: 'Hello, world!',
+    })
+
+    bot.webViewer.ui.updateLil('test', {
+        input: 'test',
+        button() {
+            console.log(`button ${chalk.green('clicked')}`)
+        }
+    })
+})

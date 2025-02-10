@@ -2,16 +2,28 @@ import { Bot } from 'mineflayer'
 import { generateSpiralMatrix } from '@zardoy/flying-squid/dist/utils'
 import ItemLoader from 'prismarine-item'
 import { AuxClientsState, handleAuxClientsProxy, passthroughPackets } from './generalPacketsProxy'
+import { Client } from 'minecraft-protocol'
+import { entityReplicator } from './replicator/entity'
 
 export class MineflayerPacketHandler {
     private Item: ReturnType<typeof ItemLoader>
     auxHelpers: ReturnType<typeof handleAuxClientsProxy>
     loginState = ''
+    onClientJoin = [] as ((client: Client) => void)[]
 
     constructor(private bot: Bot, private auxClientsState: AuxClientsState) {
         this.Item = ItemLoader(bot.version)
         this.setupPacketListeners()
         this.auxHelpers = handleAuxClientsProxy(this.bot._client, this.auxClientsState)
+
+        const oldWrite = this.bot._client.write.bind(this.bot._client)
+        this.bot._client.write = (name, data) => {
+            oldWrite(name, data)
+            this.auxHelpers.writeMainClientPackets(name, data)
+        }
+
+        const { onClientJoin } = entityReplicator(this.bot)
+        this.onClientJoin.push(onClientJoin)
     }
 
     private setupPacketListeners() {
@@ -90,10 +102,12 @@ export class MineflayerPacketHandler {
         })
 
         this.sendChunks(client)
+
+        this.onClientJoin.forEach(onClientJoin => onClientJoin(client))
     }
 
     private debug(...args: any[]) {
-        console.log(...args)
+        // console.log(...args)
     }
 
     private sendChunks(client: any) {

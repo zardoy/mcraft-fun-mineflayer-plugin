@@ -1,7 +1,17 @@
-import { Peer, PeerOptions } from 'peerjs'
-import {  } from '@roamhq/wrtc'
+import peerJS, { Peer as PeerType, PeerOptions } from 'peerjs'
+import * as wrtc from '@roamhq/wrtc'
+
+const { Peer } = peerJS as unknown as { Peer: typeof PeerType }
 
 export const createPeer = (options: PeerOptions = {}) => {
+    // Use wrtc's RTCPeerConnection for Node.js environment
+    if (typeof window === 'undefined') {
+        options.config = {
+            ...options.config,
+            RTCPeerConnection: wrtc.RTCPeerConnection
+        }
+    }
+
     const peer = new Peer(options)
 
     peer.on('open', (id) => {
@@ -25,11 +35,14 @@ export const createPeer = (options: PeerOptions = {}) => {
             console.log('Received', data)
         })
         conn.on('open', () => {
-            conn.send({message: 'hello'})
+            conn.send({ message: 'hello' })
         })
     })
 
     return peer
 }
 
-createPeer()
+// Only create peer if we're running in Node.js
+if (typeof window === 'undefined') {
+    createPeer()
+}

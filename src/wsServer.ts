@@ -9,17 +9,34 @@ const clientIgnoredPackets = [
 
 class WebsocketConnectionSocket extends Socket {
     ws: import('ws').WebSocket
+    id = ''
 
-    constructor(ws: import('ws').WebSocket, versionData) {
+    constructor(ws: import('ws').WebSocket, versionData, passwordValidation) {
         super()
         this.ws = ws
         let isFirstMessage = true
+        let dropMessages = false
 
         this.ws.on('message', (data) => {
+            if (dropMessages) return
             // if data is string "version" then output info
             if (isFirstMessage && Buffer.isBuffer(data) && Buffer.from(data).toString() === 'version') {
                 this.ws.send(JSON.stringify(versionData))
                 this.end()
+                return
+            }
+            if (isFirstMessage && passwordValidation) {
+                if (!Buffer.isBuffer(data) || Buffer.from(data).toString() !== passwordValidation) {
+                    dropMessages = true
+                    setTimeout(() => {
+                        this.ws.send(JSON.stringify({
+                            error: 'Invalid password'
+                        }))
+                        this.end()
+                    }, 500)
+                    return
+                }
+                isFirstMessage = false
                 return
             }
             isFirstMessage = false
@@ -91,10 +108,14 @@ export default class WebsocketServer extends (ServerDefault as any) {
         const versionData = {
             time: Date.now(),
             version: this.version,
+            replEnabled: this.options.allowEval === true,
+            consoleEnabled: this.options.sendConsole === true,
+            requiresPass: Boolean(this.options.password),
+            forwardChat: this.options.forwardChat === true,
             apiVersion: -1
             // todo
         }
-        const socket = new WebsocketConnectionSocket(_socket, versionData)
+        const socket = new WebsocketConnectionSocket(_socket, versionData, this.options.password)
         //@ts-expect-error
         const client: Client & { id } = new Client(true, this.version, this.customPackets, this.hideErrors)
         //@ts-expect-error
@@ -113,8 +134,17 @@ export default class WebsocketServer extends (ServerDefault as any) {
         const ip: string =
             req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for']?.split?.(',')?.[0] || req.connection?.remoteAddress || req.socket.remoteAddress
 
+        // Check IP whitelist if configured
+        if (Array.isArray(this.options.ipFilter)) {
+            if (!this.options.ipFilter.includes(ip)) {
+                client.end('Your IP is not whitelisted')
+                return
+            }
+        }
+
         _socket.remoteAddress = ip
         client.id = ip + this.i++
+        socket.id = client.id
         this.clients[client.id] = client
         this.clientsPerIp[ip] ??= 0
         this.clientsPerIp[ip]++

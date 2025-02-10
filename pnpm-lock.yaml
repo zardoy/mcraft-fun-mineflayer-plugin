@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@roamhq/wrtc':
-        specifier: ^0.8.0
-        version: 0.8.0
       '@zardoy/flying-squid':
         specifier: ^0.0.49
         version: 0.0.49
@@ -20,9 +17,6 @@ importers:
       minecraft-protocol:
         specifier: ^1.51.0
         version: 1.51.0
-      peerjs:
-        specifier: ^1.5.4
-        version: 1.5.4
       prismarine-item:
         specifier: ^1.15.0
         version: 1.15.0
@@ -30,6 +24,9 @@ importers:
         specifier: ^8.18.0
         version: 8.18.0
     devDependencies:
+      '@roamhq/wrtc':
+        specifier: ^0.8.0
+        version: 0.8.0
       '@types/react':
         specifier: ^19.0.8
         version: 19.0.8
@@ -42,9 +39,21 @@ importers:
       '@zardoy/tsconfig':
         specifier: ^1.5.1
         version: 1.5.1(typescript@5.7.2)
+      chalk:
+        specifier: ^5.4.1
+        version: 5.4.1
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.4.7
       mineflayer:
         specifier: ^4.23.0
         version: 4.23.0
+      peerjs:
+        specifier: ^1.5.4
+        version: 1.5.4
+      prismarine-entity:
+        specifier: ^2.5.0
+        version: 2.5.0
       react:
         specifier: ^19.0.0
         version: 19.0.0
@@ -58,8 +67,8 @@ importers:
         specifier: ^5.7.2
         version: 5.7.2
       valtio:
-        specifier: ^2.1.3
-        version: 2.1.3(@types/react@19.0.8)(react@19.0.0)
+        specifier: ^1.13.0
+        version: 1.13.2(@types/react@19.0.8)(react@19.0.0)
       vite:
         specifier: ^6.1.0
         version: 6.1.0(@types/node@22.10.1)(yaml@2.6.1)
@@ -581,8 +590,8 @@ packages:
   capital-case@1.0.4:
     resolution: {integrity: sha512-ds37W8CytHgwnhGGTi88pcPyR15qoNkOpYwmMMfnWqqWgESapLqvDx6huFjQ5vqWSn2Z06173XNA7LtMOeUh1A==}
 
-  chalk@5.3.0:
-    resolution: {integrity: sha512-dLitG79d+GV1Nb/VYcCDFivJeK1hiukt9QjRNVOsUtTy1rR1YJsmpGGTZ3qJos+uw7WmWF4wUwBd9jxjocFC2w==}
+  chalk@5.4.1:
+    resolution: {integrity: sha512-zgVZuo2WcZgfUEmsn6eO3kINexW8RAE4maiQ8QNs8CtpPCSyMiYsULR3HQYkm3w8FIA3SberyMJMSldGsW+U3w==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
   change-case@4.1.2:
@@ -627,6 +636,11 @@ packages:
       supports-color:
         optional: true
 
+  derive-valtio@0.1.0:
+    resolution: {integrity: sha512-OCg2UsLbXK7GmmpzMXhYkdO64vhJ1ROUUGaTFyHjVwEdMEcTTRj7W1TxLbSBxdY8QLBPCcp66MTyaSy0RpO17A==}
+    peerDependencies:
+      valtio: '*'
+
   diamond-square@https://codeload.github.com/zardoy/diamond-square/tar.gz/cfaad2d1d5909fdfa63c8cc7bc05fb5e87782d71:
     resolution: {tarball: https://codeload.github.com/zardoy/diamond-square/tar.gz/cfaad2d1d5909fdfa63c8cc7bc05fb5e87782d71}
     version: 1.3.0
@@ -641,6 +655,10 @@ packages:
 
   dot-case@3.0.4:
     resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
+
+  dotenv@16.4.7:
+    resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
+    engines: {node: '>=12'}
 
   ecdsa-sig-formatter@1.0.11:
     resolution: {integrity: sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==}
@@ -924,8 +942,8 @@ packages:
     version: 1.38.1
     engines: {node: '>=14'}
 
-  prismarine-entity@2.4.0:
-    resolution: {integrity: sha512-DBwjmoCX1IYAhN99KwYkk2rMArn65JHTzuuGXchr4GLWQs7UN4Pf9tELqBwNOu4r57x3RaW0+9+0sI3FvJQWzQ==}
+  prismarine-entity@2.5.0:
+    resolution: {integrity: sha512-nRPCawUwf9r3iKqi4I7mZRlir1Ix+DffWYdWq6p/KNnmiXve+xHE5zv8XCdhZlUmOshugHv5ONl9o6ORAkCNIA==}
 
   prismarine-item@1.15.0:
     resolution: {integrity: sha512-DysyiCzaI8S7PpRLFylAZnQo2CppXiBbaUp+8rhK+EzvzmMdS+D1/oETQm9ysB5Jw9eCer6iWGMgzZXxJE5+/w==}
@@ -970,8 +988,8 @@ packages:
     resolution: {integrity: sha512-mnpNPV3xwu63u3NwZuXM1RCp979vjHxUGHzVrb6dxbvof5Fx+b8Rs0G0c3xtEuFDreGAMWS7VrlNkDUDBMsFWQ==}
     engines: {node: '>=14'}
 
-  proxy-compare@3.0.1:
-    resolution: {integrity: sha512-V9plBAt3qjMlS1+nC8771KNf6oJ12gExvaxnNzN/9yVRLdTv/lc+oJlnSzrdYDAvBfTStPCoiaCOTmTs0adv7Q==}
+  proxy-compare@2.6.0:
+    resolution: {integrity: sha512-8xuCeM3l8yqdmbPoYeLbrAXCBWu19XEYc5/F28f5qOaoAIMyfmBUkl5axiK+x9olUvRlcekvnm98AP9RDngOIw==}
 
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
@@ -1141,6 +1159,11 @@ packages:
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
+  use-sync-external-store@1.2.0:
+    resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+
   utf8-byte-length@1.0.5:
     resolution: {integrity: sha512-Xn0w3MtiQ6zoz2vFyUVruaCL53O/DwUvkEeOvj+uulMm0BkUGYWmBYVyElqZaSLhY6ZD0ulfU3aBra2aVT4xfA==}
 
@@ -1151,12 +1174,12 @@ packages:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
 
-  valtio@2.1.3:
-    resolution: {integrity: sha512-q+dVczY5zf7kO39JPVq2qR0VXMeEpF1t+P1njHU7hAhwgtyVa/p38YmgyHZq2IQYwnkNrkvh412k4sfDmcIJ2g==}
+  valtio@1.13.2:
+    resolution: {integrity: sha512-Qik0o+DSy741TmkqmRfjq+0xpZBXi/Y6+fXZLn0xNF1z/waFMbE3rkivv5Zcf9RrMUp6zswf2J7sbh2KBlba5A==}
     engines: {node: '>=12.20.0'}
     peerDependencies:
-      '@types/react': '>=18.0.0'
-      react: '>=18.0.0'
+      '@types/react': '>=16.8'
+      react: '>=16.8'
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -1644,7 +1667,7 @@ snapshots:
   '@zardoy/flying-squid@0.0.49':
     dependencies:
       '@tootallnate/once': 2.0.0
-      chalk: 5.3.0
+      chalk: 5.4.1
       change-case: 4.1.2
       diamond-square: https://codeload.github.com/zardoy/diamond-square/tar.gz/cfaad2d1d5909fdfa63c8cc7bc05fb5e87782d71
       emit-then: 2.0.0
@@ -1657,7 +1680,7 @@ snapshots:
       node-gzip: 1.1.2
       node-rsa: 1.1.1
       prismarine-chunk: 1.36.0(minecraft-data@3.67.0)
-      prismarine-entity: 2.4.0
+      prismarine-entity: 2.5.0
       prismarine-item: 1.15.0
       prismarine-nbt: 2.6.0
       prismarine-provider-anvil: https://codeload.github.com/zardoy/prismarine-provider-anvil/tar.gz/1d548fac63fe977c8281f0a9a522b37e4d92d0b7(minecraft-data@3.67.0)
@@ -1745,7 +1768,7 @@ snapshots:
       tslib: 2.8.1
       upper-case-first: 2.0.2
 
-  chalk@5.3.0: {}
+  chalk@5.4.1: {}
 
   change-case@4.1.2:
     dependencies:
@@ -1798,6 +1821,10 @@ snapshots:
     dependencies:
       ms: 2.1.3
 
+  derive-valtio@0.1.0(valtio@1.13.2(@types/react@19.0.8)(react@19.0.0)):
+    dependencies:
+      valtio: 1.13.2(@types/react@19.0.8)(react@19.0.0)
+
   diamond-square@https://codeload.github.com/zardoy/diamond-square/tar.gz/cfaad2d1d5909fdfa63c8cc7bc05fb5e87782d71:
     dependencies:
       minecraft-data: 3.80.0
@@ -1817,6 +1844,8 @@ snapshots:
     dependencies:
       no-case: 3.0.4
       tslib: 2.8.1
+
+  dotenv@16.4.7: {}
 
   ecdsa-sig-formatter@1.0.11:
     dependencies:
@@ -2004,7 +2033,7 @@ snapshots:
       prismarine-block: 1.19.0
       prismarine-chat: 1.10.1
       prismarine-chunk: 1.36.0(minecraft-data@3.80.0)
-      prismarine-entity: 2.4.0
+      prismarine-entity: 2.5.0
       prismarine-item: 1.15.0
       prismarine-nbt: 2.6.0
       prismarine-physics: 1.9.0
@@ -2189,7 +2218,7 @@ snapshots:
     transitivePeerDependencies:
       - minecraft-data
 
-  prismarine-entity@2.4.0:
+  prismarine-entity@2.5.0:
     dependencies:
       prismarine-chat: 1.10.1
       prismarine-item: 1.15.0
@@ -2262,7 +2291,7 @@ snapshots:
       protodef-validator: 1.3.1
       readable-stream: 4.5.2
 
-  proxy-compare@3.0.1: {}
+  proxy-compare@2.6.0: {}
 
   punycode@2.3.1: {}
 
@@ -2439,6 +2468,10 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
+  use-sync-external-store@1.2.0(react@19.0.0):
+    dependencies:
+      react: 19.0.0
+
   utf8-byte-length@1.0.5: {}
 
   uuid-1345@1.0.2:
@@ -2447,9 +2480,11 @@ snapshots:
 
   uuid@8.3.2: {}
 
-  valtio@2.1.3(@types/react@19.0.8)(react@19.0.0):
+  valtio@1.13.2(@types/react@19.0.8)(react@19.0.0):
     dependencies:
-      proxy-compare: 3.0.1
+      derive-valtio: 0.1.0(valtio@1.13.2(@types/react@19.0.8)(react@19.0.0))
+      proxy-compare: 2.6.0
+      use-sync-external-store: 1.2.0(react@19.0.0)
     optionalDependencies:
       '@types/react': 19.0.8
       react: 19.0.0

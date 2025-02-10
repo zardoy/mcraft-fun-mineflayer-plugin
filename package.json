@@ -11,6 +11,9 @@
         "proxy": "tsx src/proxy-logger/index.ts",
         "studio": "vite"
     },
+    "files": [
+        "build"
+    ],
     "peerDependencies": {
         "@roamhq/wrtc": "*",
         "mineflayer": ">=4.x"
@@ -21,24 +24,27 @@
         }
     },
     "devDependencies": {
+        "@roamhq/wrtc": "^0.8.0",
         "@types/react": "^19.0.8",
         "@types/ws": "^8.5.13",
         "@vitejs/plugin-react": "^4.3.4",
         "@zardoy/tsconfig": "^1.5.1",
+        "chalk": "^5.4.1",
+        "dotenv": "^16.4.7",
         "mineflayer": "^4.23.0",
+        "peerjs": "^1.5.4",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "styled-components": "^6.1.15",
         "typescript": "^5.7.2",
         "valtio": "^1.13.0",
+        "prismarine-entity": "^2.5.0",
         "vite": "^6.1.0"
     },
     "dependencies": {
-        "@roamhq/wrtc": "^0.8.0",
         "@zardoy/flying-squid": "^0.0.49",
         "exit-hook": "2.2.1",
         "minecraft-protocol": "^1.51.0",
-        "peerjs": "^1.5.4",
         "prismarine-item": "^1.15.0",
         "ws": "^8.18.0"
     },

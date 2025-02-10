@@ -200,6 +200,12 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
 
     const newConnection = (client: any, isTcp = false) => {
         customChannel.registerChannel(client)
+        packetHandler.handleNewConnection(client)
+
+        client.on('held_item_slot', () => {
+            packetHandler.updateSlot([client])
+        })
+
         customChannel.newConnection(client)
         // Send all existing UI definitions to new connection
         for (const [id, def] of uiDefinitions.entries()) {
@@ -208,12 +214,6 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
                 update: { id, data: def }
             }, client)
         }
-
-        packetHandler.handleNewConnection(client)
-
-        client.on('held_item_slot', () => {
-            packetHandler.updateSlot([client])
-        })
 
         // Add chat forwarding handler
         if (options.forwardChat) {

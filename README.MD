@@ -28,7 +28,7 @@ bot.loadPlugin(webConnector({
     // Enable console output viewing
     sendConsole: true,
     // Optional IP whitelist
-    ipFilter: ['127.0.0.1'],
+    // ipFilter: ['127.0.0.1'],
     // Optionally enable remote JS code exection (use only with ip filter or password!)
     // allowEval: true,
     // forwardChat: true,

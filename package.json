@@ -4,6 +4,8 @@
     "author": "Vitaly Turovsky <vital2580@icloud.com>",
     "license": "MIT",
     "description": "Mineflayer viewer (connector) for mcraft.fun project and vanilla Minecraft client! Both TCP and WebSockets servers are supported.",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
     "scripts": {
         "watch": "tsc --watch",
         "build": "tsc",

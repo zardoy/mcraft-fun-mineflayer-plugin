@@ -6,6 +6,7 @@
         "declaration": true,
         "outDir": "build",
         "module": "CommonJS",
+        "esModuleInterop": true
     },
     "include": [
         "src"

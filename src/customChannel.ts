@@ -2,7 +2,7 @@ import type { Bot } from 'mineflayer'
 import type { MineflayerPluginSettings } from './server'
 import type { Client } from 'minecraft-protocol';
 
-const CHANNEL_NAME = 'minecraft-web-client:data'
+export const CHANNEL_NAME = 'minecraft-web-client:data'
 
 export const registerCustomChannel = (bot: Bot, options: MineflayerPluginSettings, getClients: () => Client[]) => {
 
@@ -19,7 +19,10 @@ export const registerCustomChannel = (bot: Bot, options: MineflayerPluginSetting
         },
         receivedProcessor: (packet: CustomChannelPacketFromClient) => { },
         registerChannel: (client: Client) => {
-            client.registerChannel(CHANNEL_NAME, ['string', []], true)
+            if (!client['channelRegistered']) {
+                client.registerChannel(CHANNEL_NAME, ['string', []], true)
+                client['channelRegistered'] = true
+            }
         },
         newConnection: (client: Client) => {
             client.on(CHANNEL_NAME, (packet) => {

@@ -7,11 +7,13 @@ Viewer for Vanilla clients & [mcraft.fun](https://mcraft.fun) ([repo](https://gi
 ## Features
 
 - Full & extended supported for the web client
-- Vanilla Minecraft client support
+- Vanilla Minecraft clients support (tcp server is enabled by default)
 - Interactive UI controls (web client only)
 - Console output viewing & REPL (web client only)
 
 ## Usage Example
+
+> Note: there are known visual issues on 1.21.4
 
 ```ts
 import { createBot } from 'mineflayer'
@@ -42,7 +44,7 @@ onReady(bot).then(() => {
         type: 'text',
         x: 10,
         y: 10,
-        text: 'Waiting for new objective...',
+        text: 'Waiting for new objective...', // pixelart icons are supported eg {icon:eye}
     })
 
     // Add interactive controls
@@ -79,6 +81,8 @@ setTimeout(() => {
 }, 5000)
 ```
 
+Look at [example/tester.ts](example/tester.ts) for a more complete example!
+
 ## Key Options
 
 - `websocketPort` (default: 25588) - WebSocket server port
@@ -93,3 +97,9 @@ setTimeout(() => {
 We don't provide built-in headless web client functionality, but you can use Puppeteer or similar browser automation tools to capture screenshots or video streams from the web viewer interface.
 
 See [example/headless.js](example/headless.js) for an example of how to use Puppeteer to capture a video stream from the web viewer!
+
+## Roadmap
+
+- [ ] Refactor core packets relay functionality & server to a dedicated package, cleanup
+- [X] Custom UI like images, svgs, circles... (done, you can specify your own css for text)
+- [ ] Add support for forwarding resource packs (easy)

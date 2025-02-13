@@ -2,8 +2,9 @@ import { Bot } from 'mineflayer'
 import { generateSpiralMatrix } from '@zardoy/flying-squid/dist/utils'
 import ItemLoader from 'prismarine-item'
 import { AuxClientsState, handleAuxClientsProxy, passthroughPackets } from './generalPacketsProxy'
-import { Client } from 'minecraft-protocol'
+import { Client, ServerClient } from 'minecraft-protocol'
 import { entityReplicator } from './replicator/entity'
+import { CHANNEL_NAME } from './customChannel'
 
 export class MineflayerPacketHandler {
     private Item: ReturnType<typeof ItemLoader>
@@ -75,9 +76,14 @@ export class MineflayerPacketHandler {
         }, clients)
     }
 
-    handleNewConnection(client: any) {
-        if (!this.auxHelpers.lastPackets.login) {
-            client.end(`Bot was not logged in yet ${this.loginState}`)
+    handleNewConnection(client: ServerClient) {
+        if (!this.auxHelpers.lastPackets.login || !this.bot.player) {
+            const reason = `Bot was not logged in yet ${this.loginState}`;
+            client.writeChannel(CHANNEL_NAME, JSON.stringify({
+                type: 'kick',
+                reason: reason
+            }))
+            client.end(reason)
             return
         }
 

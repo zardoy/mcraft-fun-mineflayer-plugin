@@ -14,6 +14,16 @@ const bot = createBot({
     username: 'dklj',
 })
 
+let activeConnections = 0
+const updateConnectionsUI = () => {
+    bot.webViewer.ui.updateUI('connections', {
+        type: 'text',
+        text: `{icon:eye} ${activeConnections}`,
+        x: 5,
+        y: 5,
+    })
+}
+
 bot.loadPlugin(viewerConnector({
     sendConsole: true,
     allowEval: true,
@@ -51,11 +61,11 @@ bot.on('chat', (message) => {
 })
 
 bot.on('resourcePack', (url) => {
+    console.log('accepting resource pack')
     bot.acceptResourcePack()
 })
 
 let block
-onReady(bot).then(() => {
     onReady(bot).then(() => {
         // Add interactive controls
         bot.webViewer.ui.updateLil('controls', {
@@ -94,6 +104,18 @@ onReady(bot).then(() => {
             activateItem() {
                 bot.activateItem()
             },
+        lookRight() {
+            bot.look(bot.entity.yaw - 1, bot.entity.pitch)
+        },
+        lookLeft() {
+            bot.look(bot.entity.yaw + 1, bot.entity.pitch)
+        },
+        lookUp() {
+            bot.look(bot.entity.yaw, bot.entity.pitch + 1)
+        },
+        lookDown() {
+            bot.look(bot.entity.yaw, bot.entity.pitch - 1)
+        },
             // placeBlock() {
             //     // bot.placeBlock(block)
             // }
@@ -113,5 +135,23 @@ onReady(bot).then(() => {
                 }
             }
         })
-    })
+    // Track connections
+    const { _tcpServer, _wsServer } = bot.webViewer
+
+    const handleNewConnection = (client) => {
+        activeConnections++
+        updateConnectionsUI()
+
+        // Track when this client disconnects
+        client.on('end', () => {
+            activeConnections--
+            updateConnectionsUI()
+        })
+    }
+
+    _tcpServer?.on('connection', handleNewConnection)
+    _wsServer?.on('connection', handleNewConnection)
+
+    // Initialize UI
+    updateConnectionsUI()
 })

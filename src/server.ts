@@ -1,4 +1,4 @@
-import { createServer, states, Client, Server } from 'minecraft-protocol'
+import { createServer, states, Client, Server, ServerClient } from 'minecraft-protocol'
 import { Bot } from 'mineflayer'
 import { generateSpiralMatrix } from '@zardoy/flying-squid/dist/utils'
 import WebsocketServer from './wsServer'
@@ -40,6 +40,11 @@ export interface MineflayerPluginSettings {
     showConnectionInstructions?: boolean
     /** @default undefined - no password protection */
     password?: string
+    /**
+     * Disabling this option is experimental but can help with understanding when bot is disconnected
+     * @default true
+     */
+    stopServersOnDisconnect?: boolean
 
     // resourcePack?: string
     // resourcePackBehavior?: 'server-first' | 'server-last'
@@ -150,7 +155,7 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
                 const protocol = options.ssl?.enabled ? 'wss' : 'ws'
                 console.log(`Web Link: https://s.mcraft.fun/?viewerConnect=${protocol}://${wsDisplayHost}:${WS_PORT}`)
                 if (!options.ssl?.enabled) {
-                    console.log('Use SSL cert or tunnel to connect from outside the network')
+                    console.log('Use SSL cert or tunnel like cloudflared to connect from outside the network')
                 }
             }
             if (tcpServer) {
@@ -187,6 +192,12 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
     bot._client.on('login', (packet) => {
         packetHandler.loginState = ''
     })
+    bot.on('kicked', (reason) => {
+        packetHandler.loginState = `Kicked from server: ${reason}`
+    })
+    bot.on('end', (reason) => {
+        packetHandler.loginState ||= `Disconnected from server`
+    })
     bot._client.on('respawn', (packet) => {
         // packetHandler.loginState = 'Bot is respawning'
     })
@@ -198,7 +209,16 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
     })
 
 
-    const newConnection = (client: any, isTcp = false) => {
+    const login = (client: ServerClient, isTcp = false) => {
+        customChannel.registerChannel(client)
+        //@ts-ignore
+        if (!client.supportFeature('hasConfigurationState')) {
+            newConnection(client, isTcp)
+        }
+    }
+    const newConnection = (client: ServerClient, isTcp = false) => {
+        if (client['handledLogin']) return
+        client['handledLogin'] = true
         customChannel.registerChannel(client)
         packetHandler.handleNewConnection(client)
 
@@ -237,8 +257,17 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
         }
     }
 
-    tcpServer?.on('playerJoin', client => newConnection(client, true))
-    wsServer?.on('playerJoin', client => newConnection(client, false))
+    const handlePlayerJoin = (client: ServerClient, isTcp = false) => {
+        //@ts-ignore
+        if (client.supportFeature('hasConfigurationState')) {
+            newConnection(client, isTcp)
+        }
+    }
+
+    tcpServer?.on('playerJoin', client => handlePlayerJoin(client, true))
+    wsServer?.on('playerJoin', client => handlePlayerJoin(client, false))
+    wsServer?.on('login', client => login(client, false))
+    tcpServer?.on('login', client => login(client, true))
 
     const hookMethod = <T extends keyof Bot>(_name: T, callback: Function) => {
         const name = _name as string
@@ -261,9 +290,11 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
     })
 
     bot.on('end', () => {
-        tcpServer?.close()
-        wsServer?.close()
-        if (httpsServer) httpsServer.close()
+        if (options.stopServersOnDisconnect !== false) {
+            tcpServer?.close()
+            wsServer?.close()
+            if (httpsServer) httpsServer.close()
+        }
     })
 
     exitHook(() => {

@@ -1,4 +1,4 @@
-import viewerConnector, { onReady } from '../src/index'
+import { viewerConnector, onReady } from '../src/index'
 import { createBot } from 'mineflayer'
 import dotenv from 'dotenv'
 import chalk from 'chalk'

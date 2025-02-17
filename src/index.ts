@@ -1,7 +1,7 @@
 import { Bot } from 'mineflayer'
 import { createMineflayerPluginServer, MineflayerPluginSettings } from './server'
 
-export default (options: MineflayerPluginSettings = {}) => {
+export const viewerConnector = (options: MineflayerPluginSettings = {}) => {
     return (bot: Bot) => createMineflayerPluginServer(bot, options)
 }
 

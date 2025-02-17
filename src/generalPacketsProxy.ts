@@ -164,14 +164,17 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: AuxClient
 
     const writeMainClientPackets = (name: string, data: any) => {
         if (name === 'position') {
+            lastPackets.position ??= {}
             Object.assign(lastPackets.position, data)
             writePosition()
         }
         if (name === 'position_look') {
+            lastPackets.position ??= {}
             Object.assign(lastPackets.position, data)
             writePosition()
         }
         if (name === 'look') {
+            lastPackets.position ??= {}
             Object.assign(lastPackets.position, data)
             writePosition()
         }

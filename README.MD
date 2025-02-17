@@ -17,14 +17,14 @@ Viewer for Vanilla clients & [mcraft.fun](https://mcraft.fun) ([repo](https://gi
 
 ```ts
 import { createBot } from 'mineflayer'
-import webConnector, { onReady } from 'mcraft-fun-mineflayer'
+import { viewerConnector, onReady } from 'mcraft-fun-mineflayer'
 
 const bot = createBot({
     host: 'your-server',
     username: 'test',
 })
 
-bot.loadPlugin(webConnector({
+bot.loadPlugin(viewerConnector({
     // Enable console output viewing
     sendConsole: true,
     // Optional IP whitelist

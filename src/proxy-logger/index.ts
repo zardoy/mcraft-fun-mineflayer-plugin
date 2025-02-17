@@ -44,6 +44,10 @@ export const createProxyServer = () => {
             version: version || undefined,
             keepAlive: false,
             username,
+            // auth: 'microsoft',
+            onMsaCode(data) {
+                console.log('msa code', data)
+            },
         })
 
         auxHelpers = handleAuxClientsProxyVanilla(serverClient, {

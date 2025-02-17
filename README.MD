@@ -100,6 +100,9 @@ See [example/headless.js](example/headless.js) for an example of how to use Pupp
 
 ## Roadmap
 
+- [ ] (high priority) Public relay server
+- [ ] Support for takeover mode
+- [ ] Fix connectivity issues for vanilla clients 1.21
 - [ ] Refactor core packets relay functionality & server to a dedicated package, cleanup
 - [X] Custom UI like images, svgs, circles... (done, you can specify your own css for text)
 - [ ] Add support for forwarding resource packs (easy)

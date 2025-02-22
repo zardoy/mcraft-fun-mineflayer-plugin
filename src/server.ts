@@ -11,8 +11,8 @@ import { networkInterfaces } from 'os'
 import { readFileSync } from 'fs'
 import { createServer as createHttpsServer } from 'https'
 import { generateSelfSignedCertificate } from './ssl'
-import { createStateCaptureFile } from './worldState'
-import { PacketsLogger, parseReplayContents } from './packetsReplay'
+import { createStateCaptureFile, PACKETS_REPLAY_FILE_EXTENSION } from './worldState'
+import { PacketsLogger, parseReplayContents } from './packetsLogger'
 import fs from 'fs'
 
 export interface MineflayerPluginSettings {
@@ -510,10 +510,10 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
     }
 
     let recordingLogger: PacketsLogger | undefined
-    const startRecording = () => {
+    const startRecording = (adjustPacketsLogger: (logger: PacketsLogger) => void) => {
         recordingLogger = createStateCaptureFile(client => {
             newConnection(client)
-        }, bot)
+        }, bot, undefined, adjustPacketsLogger)
         fakeClients.push({
             write: (name, data) => {
                 recordingLogger!.log(true, { name, state: 'play' }, data)
@@ -525,21 +525,19 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
         if (!recordingLogger) throw new Error('No current recording session')
         fakeClients.pop()
         if (saveFileName) {
-            fs.writeFileSync(`${saveFileName}.worldstate`, recordingLogger.contents)
+            fs.writeFileSync(`${saveFileName}.${PACKETS_REPLAY_FILE_EXTENSION}`, recordingLogger.contents)
         }
         recordingLogger = undefined
     }
 
-    const getRecordingLogger = (fileName?: string) => {
+    const getRecordingLogger = (fileName?: string, adjustPacketsLogger?: (logger: PacketsLogger) => void) => {
         return createStateCaptureFile(client => {
             newConnection(client)
-        }, bot, fileName)
+        }, bot, fileName, adjustPacketsLogger)
     }
 
     const unstableApi = {
-        createStateCaptureFile(fileName?: string) {
-            return getRecordingLogger(fileName)
-        },
+        createStateCaptureFile: getRecordingLogger,
         startRecording,
         stopRecording,
         debugWorldCapture() {

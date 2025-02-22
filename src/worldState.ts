@@ -1,21 +1,22 @@
 import { ServerClient, states } from 'minecraft-protocol'
-import { PacketsLogger } from "./packetsReplay"
+import { PacketsLogger } from "./packetsLogger"
 import { EventEmitter } from 'events'
 import fs from 'fs'
 import { Bot } from 'mineflayer'
 
 export const WORLD_STATE_VERSION = 1
-export const WORLD_STATE_FILE_EXTENSION = 'worldstate'
+export const WORLD_STATE_FILE_EXTENSION = 'worldstate.txt'
 
-export const PACKETS_REPLAY_FILE_EXTENSION = '.packets.txt'
+export const PACKETS_REPLAY_FILE_EXTENSION = 'packets.txt'
 
 export interface WorldStateHeader {
     formatVersion: number
     minecraftVersion: string
 }
 
-export const createStateCaptureFile = (handleConnect: (client: ServerClient) => void, bot: Bot, fileName?: string) => {
+export const createStateCaptureFile = (handleConnect: (client: ServerClient) => void, bot: Bot, fileName?: string, adjustPacketsLogger?: (logger: PacketsLogger) => void) => {
     const logger = new PacketsLogger()
+    adjustPacketsLogger?.(logger)
     const header: WorldStateHeader = {
         formatVersion: WORLD_STATE_VERSION,
         minecraftVersion: bot.version,

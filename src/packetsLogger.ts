@@ -1,6 +1,7 @@
 export class PacketsLogger {
     lastPacketTime = -1
     contents = ''
+    relativeTime = false
     logOnly = [] as string[]
     skip = [] as string[]
 
@@ -19,7 +20,12 @@ export class PacketsLogger {
             this.lastPacketTime = Date.now()
         }
 
-        const diff = `+${Date.now() - this.lastPacketTime}`
+        let diff = ''
+        if (this.relativeTime) {
+            diff = `+${Date.now() - this.lastPacketTime}`
+        } else {
+            diff = `${Math.floor(performance.now())}`
+        }
         const str = `${isFromServer ? 'S' : 'C'} ${packet.state}:${packet.name} ${diff} ${JSON.stringify(data)}`
         this.logStr(str)
         this.lastPacketTime = Date.now()
@@ -40,11 +46,12 @@ export function parseReplayContents(contents: string) {
     const repeatPoints = {} as {
         [label: string]: {
             startIndex: number
-            // endIndex: number
             count: number
             delay: number
         }
     }
+    let lastTime = -1
+
     for (let line of lines) {
         line = line.trim()
         if (!line || line.startsWith('#')) {
@@ -63,12 +70,27 @@ export function parseReplayContents(contents: string) {
         const parsed = dataStr === 'undefined' || dataStr === 'null' ? {} : JSON.parse(dataStr)
         const [state, name] = nameState!.split(':')
         if (name === 'bundle_delimiter' || name === 'keep_alive') continue
+
+        // Handle both relative (+123) and absolute (123) timestamps
+        const timestamp = diff!.startsWith('+') ?
+            Number.parseInt(diff!.slice(1), 10) : // Relative time - use as is
+            Number.parseInt(diff!, 10); // Absolute time
+
+        // For absolute timestamps, compute the relative diff from the previous packet
+        const computedDiff = diff!.startsWith('+') ? timestamp :
+            (lastTime === -1 ? 0 : timestamp - lastTime);
+
+        // Update lastTime for absolute timestamps
+        if (!diff!.startsWith('+')) {
+            lastTime = timestamp;
+        }
+
         packets.push({
             name: name!,
             state: state!,
             params: parsed,
             isFromServer: side!.toUpperCase() === 'S',
-            diff: Number.parseInt(diff!.slice(1), 10),
+            diff: computedDiff,
         })
     }
 

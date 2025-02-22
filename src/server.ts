@@ -11,6 +11,9 @@ import { networkInterfaces } from 'os'
 import { readFileSync } from 'fs'
 import { createServer as createHttpsServer } from 'https'
 import { generateSelfSignedCertificate } from './ssl'
+import { createStateCaptureFile } from './worldState'
+import { PacketsLogger, parseReplayContents } from './packetsReplay'
+import fs from 'fs'
 
 export interface MineflayerPluginSettings {
     /** @default 25587 */
@@ -166,6 +169,8 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
     })
     // #endregion
 
+    const fakeClients = [] as { write: (name: string, data: any) => void }[]
+
     const writeClients = (name: string, data: any, clients?: any[]) => {
         if (clients) {
             for (const client of clients) {
@@ -175,6 +180,7 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
             const getClients = (clients: Record<string, any>) => Object.values(clients).filter(c => c.state === states.PLAY)
             tcpServer?.writeToClients(getClients(tcpServer.clients), name, data)
             wsServer?.writeToClients(getClients(wsServer.clients), name, data)
+            fakeClients.forEach(c => c.write(name, data))
         }
     }
 
@@ -222,6 +228,7 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
         customChannel.registerChannel(client)
         packetHandler.handleNewConnection(client)
 
+        // force selected slot (dont allow viewer to change it)
         client.on('held_item_slot', () => {
             packetHandler.updateSlot([client])
         })
@@ -502,6 +509,89 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
         })
     }
 
+    let recordingLogger: PacketsLogger | undefined
+    const startRecording = () => {
+        recordingLogger = createStateCaptureFile(client => {
+            newConnection(client)
+        }, bot)
+        fakeClients.push({
+            write: (name, data) => {
+                recordingLogger!.log(true, { name, state: 'play' }, data)
+            }
+        })
+    }
+
+    const stopRecording = (saveFileName?: string) => {
+        if (!recordingLogger) throw new Error('No current recording session')
+        fakeClients.pop()
+        if (saveFileName) {
+            fs.writeFileSync(`${saveFileName}.worldstate`, recordingLogger.contents)
+        }
+        recordingLogger = undefined
+    }
+
+    const getRecordingLogger = (fileName?: string) => {
+        return createStateCaptureFile(client => {
+            newConnection(client)
+        }, bot, fileName)
+    }
+
+    const unstableApi = {
+        createStateCaptureFile(fileName?: string) {
+            return getRecordingLogger(fileName)
+        },
+        startRecording,
+        stopRecording,
+        debugWorldCapture() {
+            console.time('debugWorldCapture')
+            const recordingLogger = getRecordingLogger()
+            if (!recordingLogger) throw new Error('No current recording session')
+
+            const contents = recordingLogger.contents
+            console.log(`Captured state size: ${contents.length / 1024 / 1024} MB`)
+            const { packets } = parseReplayContents(contents)
+
+            // Count total occurrences of each packet
+            const packetCounts = {} as Record<string, number>
+            for (const packet of packets) {
+                const packetName = packet.name
+                packetCounts[packetName] = (packetCounts[packetName] || 0) + 1
+            }
+
+            // Create flattened sequence of repeated packets
+            const packetsFlattened = [] as string[]
+            let currentPacket = ''
+            let currentCount = 0
+
+            for (const packet of packets) {
+                if (packet.name === currentPacket) {
+                    currentCount++
+                } else {
+                    if (currentCount > 0) {
+                        packetsFlattened.push(`${currentPacket} ${currentCount}x`)
+                    }
+                    currentPacket = packet.name
+                    currentCount = 1
+                }
+            }
+            if (currentCount > 0) {
+                packetsFlattened.push(`${currentPacket} ${currentCount}x`)
+            }
+
+            console.log('\nSequential packets:')
+            console.log(packetsFlattened.join(', '))
+
+            console.log('\nTotal packet counts:')
+            Object.entries(packetCounts)
+                .sort(([, a], [, b]) => b - a)
+                .forEach(([name, count]) => {
+                    console.log(`${name}: ${count}`)
+                })
+
+            console.timeEnd('debugWorldCapture')
+        }
+    };
+
     const plugin = {
         ui: uiController,
         methods: {} as Record<string, (...args: any[]) => void>,
@@ -509,6 +599,7 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
         _customChannel: customChannel,
         _tcpServer: tcpServer,
         _wsServer: wsServer,
+        _unstable: unstableApi
     }
 
     bot.webViewer = plugin

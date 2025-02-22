@@ -1,11 +1,11 @@
-import { ServerClient, States } from 'minecraft-protocol'
+import { ServerClient, states } from 'minecraft-protocol'
 import { PacketsLogger } from "./packetsReplay"
 import { EventEmitter } from 'events'
 import fs from 'fs'
 import { Bot } from 'mineflayer'
 
 export const WORLD_STATE_VERSION = 1
-export const WORLD_STATE_FILE_EXTENSION = '.worldstate'
+export const WORLD_STATE_FILE_EXTENSION = 'worldstate'
 
 export const PACKETS_REPLAY_FILE_EXTENSION = '.packets.txt'
 
@@ -16,27 +16,34 @@ export interface WorldStateHeader {
 
 export const createStateCaptureFile = (handleConnect: (client: ServerClient) => void, bot: Bot, fileName?: string) => {
     const logger = new PacketsLogger()
+    const header: WorldStateHeader = {
+        formatVersion: WORLD_STATE_VERSION,
+        minecraftVersion: bot.version,
+    }
+    logger.contents = `${JSON.stringify(header)}\n`
     //@ts-ignore
     class FakeClient extends EventEmitter implements ServerClient {
         id = 0
-        state = States.PLAY
+        state = states.PLAY
         username = ''
+        socket = {} as any
         writeChannel(channel, params) {
             logger.log(true, { name: 'writeChannel', state: 'play' }, { channel, params })
         }
         write(name, params) {
             logger.log(true, { name, state: 'play' }, params)
         }
+        registerChannel(name: string, typeDefinition: any, custom?: boolean): void {
+        }
+        chat() { }
+        writeRaw(buffer: any): void {
+            throw new Error('Not implemented')
+        }
         supportFeature = bot.supportFeature
     }
     handleConnect(new FakeClient() as unknown as ServerClient)
-    const header: WorldStateHeader = {
-        formatVersion: WORLD_STATE_VERSION,
-        minecraftVersion: bot.version,
-    };
-    const contents = `${JSON.stringify(header)}\n${logger.contents}`
     if (fileName) {
-        fs.writeFileSync(`${fileName}.${WORLD_STATE_FILE_EXTENSION}`, contents)
+        fs.writeFileSync(`${fileName}.${WORLD_STATE_FILE_EXTENSION}`, logger.contents)
     }
     return logger
 }

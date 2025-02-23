@@ -1,3 +1,5 @@
+import { WorldStateHeader } from './worldState'
+
 export class PacketsLogger {
     lastPacketTime = -1
     contents = ''
@@ -41,6 +43,16 @@ export type ParsedReplayPacket = {
 }
 export function parseReplayContents(contents: string) {
     const lines = contents.split('\n')
+    if (!lines[0]) {
+        throw new Error('No header line found. Cannot parse replay definition.')
+    }
+    let header: WorldStateHeader
+    try {
+        header = JSON.parse(lines[0])
+    } catch (err) {
+        throw new Error(`Invalid JSON in file header: ${String(err)}`)
+    }
+    const packetsRaw = lines.slice(1).join('\n')
 
     const packets = [] as ParsedReplayPacket[]
     const repeatPoints = {} as {
@@ -52,7 +64,7 @@ export function parseReplayContents(contents: string) {
     }
     let lastTime = -1
 
-    for (let line of lines) {
+    for (let line of packetsRaw.split('\n')) {
         line = line.trim()
         if (!line || line.startsWith('#')) {
             if (line.toLowerCase().startsWith('#repeat')) {

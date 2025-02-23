@@ -1,7 +1,6 @@
 import { ServerClient, states } from 'minecraft-protocol'
 import { PacketsLogger } from "./packetsLogger"
 import { EventEmitter } from 'events'
-import fs from 'fs'
 import { Bot } from 'mineflayer'
 
 export const WORLD_STATE_VERSION = 1
@@ -14,7 +13,8 @@ export interface WorldStateHeader {
     minecraftVersion: string
 }
 
-export const createStateCaptureFile = (handleConnect: (client: ServerClient) => void, bot: Bot, fileName?: string, adjustPacketsLogger?: (logger: PacketsLogger) => void) => {
+// todo rename
+export const createStateCaptureFile = (bot: Bot, adjustPacketsLogger?: (logger: PacketsLogger) => void) => {
     const logger = new PacketsLogger()
     adjustPacketsLogger?.(logger)
     const header: WorldStateHeader = {
@@ -42,9 +42,8 @@ export const createStateCaptureFile = (handleConnect: (client: ServerClient) => 
         }
         supportFeature = bot.supportFeature
     }
-    handleConnect(new FakeClient() as unknown as ServerClient)
-    if (fileName) {
-        fs.writeFileSync(`${fileName}.${WORLD_STATE_FILE_EXTENSION}`, logger.contents)
+    return {
+        client: new FakeClient() as unknown as ServerClient,
+        logger
     }
-    return logger
 }

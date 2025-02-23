@@ -11,7 +11,7 @@ import { networkInterfaces } from 'os'
 import { readFileSync } from 'fs'
 import { createServer as createHttpsServer } from 'https'
 import { generateSelfSignedCertificate } from './ssl'
-import { createStateCaptureFile, PACKETS_REPLAY_FILE_EXTENSION } from './worldState'
+import { createStateCaptureFile as createStateCaptureFileBase, PACKETS_REPLAY_FILE_EXTENSION, WORLD_STATE_FILE_EXTENSION } from './worldState'
 import { PacketsLogger, parseReplayContents } from './packetsLogger'
 import fs from 'fs'
 
@@ -510,15 +510,12 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
     }
 
     let recordingLogger: PacketsLogger | undefined
-    const startRecording = (adjustPacketsLogger: (logger: PacketsLogger) => void) => {
-        recordingLogger = createStateCaptureFile(client => {
-            newConnection(client)
-        }, bot, undefined, adjustPacketsLogger)
-        fakeClients.push({
-            write: (name, data) => {
-                recordingLogger!.log(true, { name, state: 'play' }, data)
-            }
-        })
+    const startRecording = (adjustPacketsLogger?: (logger: PacketsLogger) => void) => {
+        const stateCaptureFileBase = createStateCaptureFileBase(bot, adjustPacketsLogger);
+        stateCaptureFileBase.logger.relativeTime = false
+        recordingLogger = stateCaptureFileBase.logger
+        fakeClients.push(stateCaptureFileBase.client)
+        newConnection(stateCaptureFileBase.client)
     }
 
     const stopRecording = (saveFileName?: string) => {
@@ -530,19 +527,25 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
         recordingLogger = undefined
     }
 
-    const getRecordingLogger = (fileName?: string, adjustPacketsLogger?: (logger: PacketsLogger) => void) => {
-        return createStateCaptureFile(client => {
-            newConnection(client)
-        }, bot, fileName, adjustPacketsLogger)
+    const createStateCaptureFile = (fileName?: string, adjustPacketsLogger?: (logger: PacketsLogger) => void) => {
+        const { logger: newLogger, client } = createStateCaptureFileBase(bot, adjustPacketsLogger)
+        fakeClients.push(client)
+        newConnection(client)
+        fakeClients.pop()
+        if (fileName) {
+            fs.mkdirSync(fileName, { recursive: true })
+            fs.writeFileSync(`${fileName}.${WORLD_STATE_FILE_EXTENSION}`, newLogger.contents)
+        }
+        return newLogger
     }
 
     const unstableApi = {
-        createStateCaptureFile: getRecordingLogger,
+        createStateCaptureFile,
         startRecording,
         stopRecording,
         debugWorldCapture() {
             console.time('debugWorldCapture')
-            const recordingLogger = getRecordingLogger()
+            const recordingLogger = createStateCaptureFile()
             if (!recordingLogger) throw new Error('No current recording session')
 
             const contents = recordingLogger.contents

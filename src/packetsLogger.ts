@@ -1,7 +1,7 @@
 export class PacketsLogger {
     lastPacketTime = -1
     contents = ''
-    relativeTime = false
+    relativeTime = true
     logOnly = [] as string[]
     skip = [] as string[]
 

@@ -8,10 +8,12 @@ dotenv.config({
 })
 
 const bot = createBot({
-    host: process.env.HOST,
-
+    // host: process.env.HOST,
+    host: 'kaboom.pw',
     // port: 25569,
-    username: 'dklj',
+
+    username: 'dar',
+    version: '1.20.4',
 })
 
 let activeConnections = 0
@@ -67,74 +69,90 @@ bot.on('resourcePack', (url) => {
 
 let block
 onReady(bot).then(() => {
-    // Add interactive controls
-    bot.webViewer.ui.updateLil('controls', {
-        forward: false,
-        backwards: false,
-        left: false,
-        right: false,
-        sneak: false,
-        async jump() {
-            await bot.setControlState('jump', true)
-            setTimeout(() => bot.setControlState('jump', false), 100)
-        },
-        chat() {
-            bot.chat('Hello')
-        },
-        lookAtGrass() {
-            block = bot.findBlock({
-                matching(b) {
-                    return b.name.includes('grass')
+    let recording = false
+    const upControls = () => {
+        // Add interactive controls
+        bot.webViewer.ui.updateLil('controls', {
+            forward: false,
+            backwards: false,
+            left: false,
+            right: false,
+            sneak: false,
+            async jump() {
+                await bot.setControlState('jump', true)
+                setTimeout(() => bot.setControlState('jump', false), 100)
+            },
+            chat() {
+                bot.chat('Hello')
+            },
+            lookAtGrass() {
+                block = bot.findBlock({
+                    matching(b) {
+                        return b.name.includes('grass')
+                    }
+                })
+                console.log('Now looking at', block.name)
+                bot.lookAt(block.position)
+            },
+            lookAtBlockBelow() {
+                block = bot.world.getBlock(bot.entity.position.offset(0, -1, 0))
+                console.log('Now looking at', block.name)
+                bot.lookAt(block.position)
+            },
+            startDigging() {
+                bot.dig(block)
+            },
+            stopDigging() {
+                bot.stopDigging()
+            },
+            activateItem() {
+                bot.activateItem()
+            },
+            lookRight() {
+                bot.look(bot.entity.yaw - 1, bot.entity.pitch)
+            },
+            lookLeft() {
+                bot.look(bot.entity.yaw + 1, bot.entity.pitch)
+            },
+            lookUp() {
+                bot.look(bot.entity.yaw, bot.entity.pitch + 1)
+            },
+            lookDown() {
+                bot.look(bot.entity.yaw, bot.entity.pitch - 1)
+            },
+            saveWorldIntoFile() {
+                bot.webViewer._unstable.createStateCaptureFile('world')
+            },
+            [recording ? 'saveRecording' : 'startRecording']() {
+                if (recording) {
+                    bot.webViewer._unstable.startRecording()
+                } else {
+                    bot.webViewer._unstable.stopRecording('recording')
                 }
-            })
-            console.log('Now looking at', block.name)
-            bot.lookAt(block.position)
-        },
-        lookAtBlockBelow() {
-            block = bot.world.getBlock(bot.entity.position.offset(0, -1, 0))
-            console.log('Now looking at', block.name)
-            bot.lookAt(block.position)
-        },
-        startDigging() {
-            bot.dig(block)
-        },
-        stopDigging() {
-            bot.stopDigging()
-        },
-        activateItem() {
-            bot.activateItem()
-        },
-        lookRight() {
-            bot.look(bot.entity.yaw - 1, bot.entity.pitch)
-        },
-        lookLeft() {
-            bot.look(bot.entity.yaw + 1, bot.entity.pitch)
-        },
-        lookUp() {
-            bot.look(bot.entity.yaw, bot.entity.pitch + 1)
-        },
-        lookDown() {
-            bot.look(bot.entity.yaw, bot.entity.pitch - 1)
-        },
-        // placeBlock() {
-        //     // bot.placeBlock(block)
-        // }
-    }, {
-        // Optional callback when values change
-        onUpdate(id, newValue) {
-            if (id === 'forward') {
-                bot.setControlState('forward', newValue)
-            } else if (id === 'backwards') {
-                bot.setControlState('back', newValue)
-            } else if (id === 'left') {
-                bot.setControlState('left', newValue)
-            } else if (id === 'right') {
-                bot.setControlState('right', newValue)
-            } else if (id === 'sneak') {
-                bot.setControlState('sneak', newValue)
+                recording = !recording
+                upControls()
+            },
+            // placeBlock() {
+            //     // bot.placeBlock(block)
+            // }
+        }, {
+            // Optional callback when values change
+            onUpdate(id, newValue) {
+                if (id === 'forward') {
+                    bot.setControlState('forward', newValue)
+                } else if (id === 'backwards') {
+                    bot.setControlState('back', newValue)
+                } else if (id === 'left') {
+                    bot.setControlState('left', newValue)
+                } else if (id === 'right') {
+                    bot.setControlState('right', newValue)
+                } else if (id === 'sneak') {
+                    bot.setControlState('sneak', newValue)
+                }
             }
-        }
-    })
+        })
+    }
+    upControls()
     // Track connections
     const { _tcpServer, _wsServer } = bot.webViewer
 

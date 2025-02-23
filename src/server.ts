@@ -512,7 +512,6 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
     let recordingLogger: PacketsLogger | undefined
     const startRecording = (adjustPacketsLogger?: (logger: PacketsLogger) => void) => {
         const stateCaptureFileBase = createStateCaptureFileBase(bot, adjustPacketsLogger);
-        stateCaptureFileBase.logger.relativeTime = false
         recordingLogger = stateCaptureFileBase.logger
         fakeClients.push(stateCaptureFileBase.client)
         newConnection(stateCaptureFileBase.client)

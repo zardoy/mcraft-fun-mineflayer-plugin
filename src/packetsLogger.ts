@@ -108,6 +108,7 @@ export function parseReplayContents(contents: string) {
 
     return {
         packets,
-        repeatPoints
+        repeatPoints,
+        header
     }
 }

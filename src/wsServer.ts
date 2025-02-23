@@ -1,5 +1,5 @@
 import { Socket } from 'net'
-import { WebSocketServer } from 'ws'
+import { WebSocketServer, WebSocket } from 'ws'
 import ServerDefault from 'minecraft-protocol/src/server'
 import { states, Client } from 'minecraft-protocol'
 
@@ -72,6 +72,8 @@ class WebsocketConnectionSocket extends Socket {
 export default class WebsocketServer extends (ServerDefault as any) {
     i = 0
     clientsPerIp = {}
+    relayConnection: WebSocket | null = null
+    relayServerId: string | null = null
 
     listen(port, host) {
         // implement it with websocket instead
@@ -97,8 +99,56 @@ export default class WebsocketServer extends (ServerDefault as any) {
             })
             self.socketServer.on('listening', () => {
                 self.emit('listening')
+                // Connect to relay server when local server is ready
+                this.connectToRelay()
             })
         }
+    }
+
+    private connectToRelay() {
+        const relayUrl = process.env.RELAY_URL || 'ws://localhost:8080'
+        this.relayConnection = new WebSocket(relayUrl)
+
+        this.relayConnection.on('open', () => {
+            console.log('Connected to relay server')
+            // Register as a server
+            this.relayConnection!.send(JSON.stringify({
+                type: 'register',
+                role: 'server',
+                version: this.version,
+                username: 'minecraft-server'
+            }))
+        })
+
+        this.relayConnection.on('message', (data: Buffer) => {
+            try {
+                const message = JSON.parse(data.toString())
+                if (message.type === 'registered') {
+                    this.relayServerId = message.id
+                    console.log('Registered with relay server, ID:', message.id)
+                } else if (message.type === 'packet') {
+                    // Handle incoming packets from relay clients
+                    // Forward them to the appropriate local client
+                    for (const clientId in this.clients) {
+                        const client = this.clients[clientId]
+                        if (client.state === states.PLAY) {
+                            client.write(message.data.name, message.data.params)
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error processing relay message:', error)
+            }
+        })
+
+        this.relayConnection.on('close', () => {
+            console.log('Disconnected from relay server, attempting to reconnect...')
+            setTimeout(() => this.connectToRelay(), 5000)
+        })
+
+        this.relayConnection.on('error', (error) => {
+            console.error('Relay connection error:', error)
+        })
     }
 
     newConnection(webSocket, req) {
@@ -160,9 +210,26 @@ export default class WebsocketServer extends (ServerDefault as any) {
         //@ts-expect-error
         client.setSocket(socket)
         this.emit('connection', client)
+
+        // Forward all packets to relay server
+        client.on('packet', (data, meta) => {
+            if (this.relayConnection?.readyState === WebSocket.OPEN && this.relayServerId) {
+                this.relayConnection.send(JSON.stringify({
+                    type: 'packet',
+                    data: {
+                        name: meta.name,
+                        params: data
+                    }
+                }))
+            }
+        })
     }
 
     close() {
+        if (this.relayConnection) {
+            this.relayConnection.close()
+        }
+
         for (const clientId of Object.keys(this.clients)) {
             const client = this.clients[clientId]
             client.end('ServerShutdown')
@@ -175,5 +242,16 @@ export default class WebsocketServer extends (ServerDefault as any) {
         if (clients.length === 0) return
         const buffer = this.serializer.createPacketBuffer({ name, params })
         for (const client of clients) client.writeRaw(buffer)
+
+        // Also forward to relay server
+        if (this.relayConnection?.readyState === WebSocket.OPEN && this.relayServerId) {
+            this.relayConnection.send(JSON.stringify({
+                type: 'packet',
+                data: {
+                    name,
+                    params
+                }
+            }))
+        }
     }
 }

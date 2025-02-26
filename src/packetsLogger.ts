@@ -1,4 +1,7 @@
-import { WorldStateHeader } from './worldState'
+export interface PacketsFileHeader {
+    formatVersion: number
+    minecraftVersion: string
+}
 
 export class PacketsLogger {
     lastPacketTime = -1
@@ -7,30 +10,36 @@ export class PacketsLogger {
     logOnly = [] as string[]
     skip = [] as string[]
 
+    constructor(public header: Pick<PacketsFileHeader, 'minecraftVersion'> & Record<string, any>) {
+        this.logStr(`${JSON.stringify(header)}\n`)
+    }
+
     logStr(str: string) {
         this.contents += `${str}\n`
     }
 
-    log(isFromServer: boolean, packet: { name; state }, data: any) {
+    log(isFromServer: boolean, packet: { name; state, time?: number }, data: any) {
         if (this.logOnly.length > 0 && !this.logOnly.includes(packet.name)) {
             return
         }
         if (this.skip.length > 0 && this.skip.includes(packet.name)) {
             return
         }
+
+        const time = packet.time ?? Math.floor(performance.now())
         if (this.lastPacketTime === -1) {
-            this.lastPacketTime = Date.now()
+            this.lastPacketTime = time
         }
 
         let diff = ''
         if (this.relativeTime) {
-            diff = `+${Date.now() - this.lastPacketTime}`
+            diff = `+${time - this.lastPacketTime}`
         } else {
-            diff = `${Math.floor(performance.now())}`
+            diff = `${time}`
         }
         const str = `${isFromServer ? 'S' : 'C'} ${packet.state}:${packet.name} ${diff} ${JSON.stringify(data)}`
         this.logStr(str)
-        this.lastPacketTime = Date.now()
+        this.lastPacketTime = time
     }
 }
 
@@ -46,7 +55,7 @@ export function parseReplayContents(contents: string) {
     if (!lines[0]) {
         throw new Error('No header line found. Cannot parse replay definition.')
     }
-    let header: WorldStateHeader
+    let header: PacketsFileHeader
     try {
         header = JSON.parse(lines[0])
     } catch (err) {

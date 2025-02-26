@@ -110,6 +110,7 @@ export class MineflayerPacketHandler {
         this.sendChunks(client)
 
         this.onClientJoin.forEach(onClientJoin => onClientJoin(client))
+        client.write('player_info', this.auxHelpers.firstPackets.player_info)
     }
 
     private debug(...args: any[]) {

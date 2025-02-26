@@ -36,6 +36,8 @@ export const passthroughPackets = [
     'respawn',
     'position',
     'held_item_slot',
+    'playerlist_header',
+    'server_data',
 
     // Time update
     'update_time',
@@ -123,6 +125,8 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: AuxClient
         login: null as any,
         position: null as any,
         player_info: null as any,
+        playerlist_header: null as any,
+        server_data: null as any,
     }
     const firstPackets = {
         player_info: null as any,
@@ -225,6 +229,8 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: AuxClient
         client.write('login', lastPackets.login)
         client.write('player_info', firstPackets.player_info)
         client.write('player_info', lastPackets.player_info)
+        client.write('playerlist_header', lastPackets.playerlist_header)
+        // client.write('server_data', lastPackets.server_data)
 
         // client.write('spawn_position', {
         //     location: bot.entity.position,
@@ -244,6 +250,7 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: AuxClient
 
     return {
         lastPackets,
+        firstPackets,
         onNewAuxConnection,
         writeMainClientPackets,
         writeToAuxClients,

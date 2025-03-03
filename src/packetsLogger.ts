@@ -68,6 +68,7 @@ export type ParsedReplayPacket = {
     diff: number
     isFromServer: boolean
 }
+
 export function parseReplayContents(contents: string) {
     const lines = contents.split('\n')
     if (!lines[0]) {

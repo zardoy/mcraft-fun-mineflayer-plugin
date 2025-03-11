@@ -229,7 +229,7 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: AuxClient
         client.write('login', lastPackets.login)
         client.write('player_info', firstPackets.player_info)
         client.write('player_info', lastPackets.player_info)
-        client.write('playerlist_header', lastPackets.playerlist_header)
+        // client.write('playerlist_header', lastPackets.playerlist_header)
         // client.write('server_data', lastPackets.server_data)
 
         // client.write('spawn_position', {

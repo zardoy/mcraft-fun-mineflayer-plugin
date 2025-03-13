@@ -7,6 +7,7 @@ export class PacketsLogger {
     lastPacketTime = -1
     contents = ''
     relativeTime = true
+    formattedTime = false
     logOnly = [] as string[]
     skip = [] as string[]
 
@@ -16,6 +17,15 @@ export class PacketsLogger {
 
     logStr(str: string) {
         this.contents += `${str}\n`
+    }
+
+    formatTime(time: number): string {
+        const date = new Date(time)
+        const hours = date.getHours().toString().padStart(2, '0')
+        const minutes = date.getMinutes().toString().padStart(2, '0')
+        const seconds = date.getSeconds().toString().padStart(2, '0')
+        const milliseconds = date.getMilliseconds().toString().padStart(3, '0').slice(0, 2)
+        return `${hours}:${minutes}:${seconds}.${milliseconds}`
     }
 
     log(isFromServer: boolean, packet: { name; state, time?: number }, data: any) {
@@ -32,7 +42,9 @@ export class PacketsLogger {
         }
 
         let diff = ''
-        if (this.relativeTime) {
+        if (this.formattedTime) {
+            diff = this.formatTime(time)
+        } else if (this.relativeTime) {
             diff = `+${time - this.lastPacketTime}`
         } else {
             diff = `${time}`
@@ -111,18 +123,32 @@ export function parseReplayContents(contents: string) {
         const [state, name] = nameState!.split(':')
         if (name === 'bundle_delimiter' || name === 'keep_alive') continue
 
-        // Handle both relative (+123) and absolute (123) timestamps
-        const timestamp = diff!.startsWith('+') ?
-            Number.parseInt(diff!.slice(1), 10) : // Relative time - use as is
-            Number.parseInt(diff!, 10); // Absolute time
+        let computedDiff = 0;
+        let timestamp = 0;
 
-        // For absolute timestamps, compute the relative diff from the previous packet
-        const computedDiff = diff!.startsWith('+') ? timestamp :
-            (lastTime === -1 ? 0 : timestamp - lastTime);
+        // Handle different timestamp formats
+        if (diff!.includes(':')) {
+            // Handle formatted time (HH:MM:SS.mm)
+            const parts = diff!.split(':')
+            if (parts.length >= 3) {
+                const hours = parseInt(parts[0] || '0')
+                const minutes = parseInt(parts[1] || '0')
+                const secondsParts = (parts[2] || '0').split('.')
+                const seconds = parseInt(secondsParts[0] || '0')
+                const milliseconds = parseInt(secondsParts[1] || '0') * 10
 
-        // Update lastTime for absolute timestamps
-        if (!diff!.startsWith('+')) {
-            lastTime = timestamp;
+                timestamp = (hours * 3600 + minutes * 60 + seconds) * 1000 + milliseconds
+                computedDiff = lastTime === -1 ? 0 : timestamp - lastTime
+                lastTime = timestamp
+            }
+        } else if (diff!.startsWith('+')) {
+            // Handle relative time
+            computedDiff = parseInt(diff!.slice(1))
+        } else {
+            // Handle absolute time
+            timestamp = parseInt(diff!)
+            computedDiff = lastTime === -1 ? 0 : timestamp - lastTime
+            lastTime = timestamp
         }
 
         packets.push({

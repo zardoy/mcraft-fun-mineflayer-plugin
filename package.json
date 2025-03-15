@@ -20,6 +20,9 @@
     "release": {
         "preset": {
             "runTest": false
+        },
+        "sharedActionsOverride": {
+            "runTest": false
         }
     },
     "peerDependencies": {

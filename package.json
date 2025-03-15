@@ -10,6 +10,7 @@
         "watch": "tsc --watch",
         "build": "tsc",
         "test-local": "tsx watch example/simple.ts",
+        "test": "vitest",
         "proxy": "tsx src/proxy-logger/index.ts",
         "studio": "vite"
     },
@@ -41,7 +42,8 @@
         "styled-components": "^6.1.15",
         "typescript": "^5.7.2",
         "valtio": "^1.13.0",
-        "vite": "^6.1.0"
+        "vite": "^6.1.0",
+        "vitest": "^3.0.8"
     },
     "dependencies": {
         "@zardoy/flying-squid": "^0.0.49",

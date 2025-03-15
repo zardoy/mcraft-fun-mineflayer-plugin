@@ -17,6 +17,11 @@
     "files": [
         "build"
     ],
+    "release": {
+        "preset": {
+            "runTest": false
+        }
+    },
     "peerDependencies": {
         "@roamhq/wrtc": "*",
         "mineflayer": ">=4.x"

@@ -18,6 +18,8 @@ jobs:
         run: npm install -g corepack && corepack enable
       - name: Install Dependencies
         run: pnpm install
+      - name: Test
+        run: pnpm test
       - name: Set publishing config
         run: pnpm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
         env:

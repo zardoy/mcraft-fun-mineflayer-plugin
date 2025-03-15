@@ -49,7 +49,7 @@ export class PacketsLogger {
         } else {
             diff = `${time}`
         }
-        const str = `${isFromServer ? 'S' : 'C'} ${packet.state}:${packet.name} ${diff} ${processPacketDataForLogging(structuredClone(data))}`
+        const str = `${isFromServer ? 'S' : 'C'} ${packet.state}:${packet.name} ${diff} ${processPacketDataForLogging(data)}`
         this.logStr(str)
         this.lastPacketTime = time
     }
@@ -63,26 +63,24 @@ export const processPacketDataForLogging = (data: any) => {
     }
 
     const check = (value: any): any => {
-        if (value === null || value === undefined) {
-            return normalize(value)
-        }
-
-        if (Array.isArray(value)) {
-            return value.map(item => check(item))
+        if (value === null || value === undefined || value instanceof Uint8Array) {
+            return
         }
 
         if (typeof value === 'object') {
-            const result: any = {}
             for (const key in value) {
-                result[key] = check(value[key])
+                const normalized = check(value[key])
+                if (normalized !== undefined) {
+                    value[key] = normalized
+                }
             }
-            return result
         }
 
         return normalize(value)
     }
 
-    return JSON.stringify(check(data))
+    check(data)
+    return JSON.stringify(data)
 }
 
 export type ParsedReplayPacket = {

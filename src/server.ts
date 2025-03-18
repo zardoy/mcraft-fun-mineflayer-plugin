@@ -599,6 +599,7 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
         _customChannel: customChannel,
         _tcpServer: tcpServer,
         _wsServer: wsServer,
+        captureWorldIntoFile: createStateCaptureFile,
         _unstable: unstableApi
     }
 

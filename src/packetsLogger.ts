@@ -58,29 +58,32 @@ export class PacketsLogger {
 export const processPacketDataForLogging = (data: any) => {
     const normalize = (value: any): any => {
         if (typeof value === 'bigint') return Number(value)
-        if (value === undefined) return null
         return value
     }
 
     const check = (value: any): any => {
-        if (value === null || value === undefined || value instanceof Uint8Array) {
-            return
+        if (value === null || value === undefined) {
+            return value
         }
 
-        if (typeof value === 'object') {
+        if (Array.isArray(value)) {
+            return value.map(check)
+        }
+
+        if (typeof value === 'object' && !(value instanceof Uint8Array)) {
+            const result: any = {}
             for (const key in value) {
-                const normalized = check(value[key])
-                if (normalized !== undefined) {
-                    value[key] = normalized
+                if (Object.prototype.hasOwnProperty.call(value, key)) {
+                    result[key] = check(value[key])
                 }
             }
+            return result
         }
 
         return normalize(value)
     }
 
-    check(data)
-    return JSON.stringify(data)
+    return JSON.stringify(check(data))
 }
 
 export type ParsedReplayPacket = {

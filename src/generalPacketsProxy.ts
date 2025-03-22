@@ -19,6 +19,8 @@ export const passthroughPackets = [
     'attach_entity',
     'entity_effect',
     'remove_entity_effect',
+    'update_attributes',
+    'entity_update_attributes', // todo capture for bot
     'experience',
 
     // World and block updates
@@ -73,10 +75,13 @@ export const passthroughPackets = [
     'custom_payload',
     'kick_disconnect',
     'game_state_change',
+    'acknowledge_player_digging',
 
     'chat', // todo re-capture
     'difficulty',
     'title',
+    'action_bar',
+    'sculk_vibration_signal',
     'clear_titles',
     'initialize_world_border',
     'world_border_center',
@@ -100,9 +105,11 @@ export const passthroughPackets = [
     'damage_event',
     'hurt_animation',
 
+    'open_book',
     'bed',
     'map_chunk_bulk',
     'update_sign',
+    'update_view_position',
     'world_border',
     'set_compression',
     'update_entity_nbt',
@@ -127,16 +134,38 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: AuxClient
         player_info: null as any,
         playerlist_header: null as any,
         server_data: null as any,
+
+        initialize_world_border: null as any,
+        world_border_size: null as any,
+        world_border_center: null as any,
+        world_border_lerp_size: null as any,
+        world_border_warning_delay: null as any,
+        world_border_warning_reach: null as any,
+    }
+    const lastPacketsArr = {
+        map: [] as any[],
     }
     const firstPackets = {
         player_info: null as any,
     }
 
     serverConnection.on('login', (packet) => {
+        lastPackets.world_border_size = null
+        lastPackets.world_border_center = null
+        lastPackets.world_border_lerp_size = null
+        lastPackets.world_border_warning_delay = null
+        lastPackets.world_border_warning_reach = null
+        lastPacketsArr.map = []
+
         lastPackets.login = packet
     })
 
     serverConnection.on('packet', (data, { name }) => {
+        if (name in lastPacketsArr) {
+            lastPacketsArr[name].push(data)
+            return
+        }
+
         if (!(name in lastPackets)) return
         lastPackets[name] = data
     })
@@ -236,6 +265,15 @@ export const handleAuxClientsProxy = (serverConnection: Client, state: AuxClient
         //     location: bot.entity.position,
         //     angle: 0,
         // })
+        if (lastPackets.initialize_world_border) client.write('initialize_world_border', lastPackets.initialize_world_border)
+        if (lastPackets.world_border_size) client.write('world_border_size', lastPackets.world_border_size)
+        if (lastPackets.world_border_center) client.write('world_border_center', lastPackets.world_border_center)
+        if (lastPackets.world_border_lerp_size) client.write('world_border_lerp_size', lastPackets.world_border_lerp_size)
+        if (lastPackets.world_border_warning_delay) client.write('world_border_warning_delay', lastPackets.world_border_warning_delay)
+        if (lastPackets.world_border_warning_reach) client.write('world_border_warning_reach', lastPackets.world_border_warning_reach)
+        for (const map of lastPacketsArr.map) {
+            client.write('map', map)
+        }
 
         writeToAuxClients('held_item_slot', { slot: 0 })
         writePosition()

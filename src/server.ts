@@ -63,7 +63,9 @@ export interface MineflayerPluginSettings {
 }
 
 export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPluginSettings) => {
-    console.log('Starting servers...')
+    if (options.tcpEnabled !== false && options.websocketEnabled !== false) {
+        console.log('Starting servers...')
+    }
 
     // #region start servers
     const TCP_PORT = options.tcpPort ?? 25587
@@ -149,7 +151,8 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
         serverPromises.push(new Promise<void>(resolve => tcpServer.once('listening', resolve)).then(() => console.log('TCP server is ready')))
     }
 
-    void Promise.all(serverPromises).then(() => {
+    void Promise.all(serverPromises).then((arr) => {
+        if (arr.length === 0) return
         console.log(`Viewer servers are ready:`)
         if (options.showConnectionInstructions !== false) {
             const defaultIp = getDefaultIp()

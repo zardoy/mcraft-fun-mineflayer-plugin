@@ -173,7 +173,12 @@ export default class WebsocketServer extends (ServerDefault as any) {
 
     writeToClients(clients, name, params) {
         if (clients.length === 0) return
-        const buffer = this.serializer.createPacketBuffer({ name, params })
-        for (const client of clients) client.writeRaw(buffer)
+        try {
+            const buffer = this.serializer.createPacketBuffer({ name, params })
+            for (const client of clients) client.writeRaw(buffer)
+        } catch (err) {
+            console.error(`Something went wrong with sending packet ${name} to ${clients.length} clients with params ${JSON.stringify(params)}`)
+            console.error(err)
+        }
     }
 }

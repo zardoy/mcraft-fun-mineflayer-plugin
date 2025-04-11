@@ -119,7 +119,6 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
                         return params
                     }
                 })
-                httpsServer.listen(WS_PORT, WS_HOST)
             } else {
                 wsServer = createServer({
                     "online-mode": false,

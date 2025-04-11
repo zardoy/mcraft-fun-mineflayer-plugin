@@ -1,11 +1,19 @@
 import { Socket } from 'net'
-import { WebSocketServer } from 'ws'
+import { WebSocketServer as WsServerCore } from 'ws'
 import ServerDefault from 'minecraft-protocol/src/server'
 import { states, Client } from 'minecraft-protocol'
 
 const clientIgnoredPackets = [
     'position'
 ]
+
+let nextWebsocketOptions: {
+    server: any
+} | undefined
+
+export function setNextWebsocketOptions(options: typeof nextWebsocketOptions) {
+    nextWebsocketOptions = options
+}
 
 class WebsocketConnectionSocket extends Socket {
     ws: import('ws').WebSocket
@@ -84,7 +92,17 @@ export default class WebsocketServer extends (ServerDefault as any) {
                 },
             }
         } else {
-            const ws = new WebSocketServer({ port })
+            let server
+            if (nextWebsocketOptions?.server) {
+                server = nextWebsocketOptions.server
+            }
+
+            const ws = new WsServerCore({
+                port: server ? undefined : port,
+                server: server,
+                host
+            })
+
             this.socketServer = ws
             ws.on('connection', (webSocket, req) => {
                 self.newConnection(webSocket, req)

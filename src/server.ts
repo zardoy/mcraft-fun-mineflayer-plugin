@@ -1,7 +1,7 @@
 import { createServer, states, Client, Server, ServerClient } from 'minecraft-protocol'
 import { Bot } from 'mineflayer'
 import { generateSpiralMatrix } from '@zardoy/flying-squid/dist/utils'
-import WebsocketServer from './wsServer'
+import WebsocketServer, { setNextWebsocketOptions } from './wsServer'
 import exitHook from 'exit-hook'
 import ItemLoader from 'prismarine-item'
 import { passthroughPackets } from './generalPacketsProxy'
@@ -9,7 +9,7 @@ import { MineflayerPacketHandler } from './mineflayerPacketHandler'
 import { registerCustomChannel, UIDefinition, UiLilDef } from './customChannel'
 import { networkInterfaces } from 'os'
 import { readFileSync } from 'fs'
-import { createServer as createHttpsServer } from 'https'
+import { createServer as createHttpsServer, Server as HttpsServer } from 'https'
 import { generateSelfSignedCertificate } from './ssl'
 import { createStateCaptureFile as createStateCaptureFileBase, PACKETS_REPLAY_FILE_EXTENSION, WORLD_STATE_FILE_EXTENSION } from './worldState'
 import { PacketsLogger, parseReplayContents } from './packetsLogger'
@@ -75,7 +75,7 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
 
     let tcpServer: Server | undefined
     let wsServer: Server | undefined
-    let httpsServer: Server | undefined
+    let httpsServer: HttpsServer | undefined
 
     if (options.tcpEnabled !== false) {
         if (options.password) {
@@ -90,8 +90,9 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
         }
     }
 
+    const websitePreview = 'https://s.mcraft.fun'
+    setNextWebsocketOptions(undefined)
     if (options.websocketEnabled !== false) {
-        let httpsServer
         if (options.ssl?.enabled) {
             let sslOptions
             if (options.ssl.selfSigned) {
@@ -107,6 +108,19 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
 
             if (sslOptions) {
                 httpsServer = createHttpsServer(sslOptions)
+                httpsServer.on('request', (req, res) => {
+                    // Check if this is a WebSocket upgrade request
+                    if (req.headers.upgrade?.toLowerCase() !== 'websocket') {
+                        res.writeHead(302, {
+                            'Location': websitePreview + '/?viewerConnect=wss://' + req.headers.host
+                        })
+                        res.end()
+                        return
+                    }
+                })
+                setNextWebsocketOptions({
+                    server: httpsServer
+                })
                 wsServer = createServer({
                     "online-mode": false,
                     version: bot.version,
@@ -114,11 +128,8 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
                     port: WS_PORT,
                     host: WS_HOST,
                     customPackets: {},
-                    beforePing: (params: any) => {
-                        params.server = httpsServer
-                        return params
-                    }
                 })
+                httpsServer.listen(WS_PORT, WS_HOST)
             } else {
                 wsServer = createServer({
                     "online-mode": false,
@@ -158,7 +169,7 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
             if (wsServer) {
                 const wsDisplayHost = WS_HOST ?? (!options.ssl?.enabled ? 'localhost' : defaultIp)
                 const protocol = options.ssl?.enabled ? 'wss' : 'ws'
-                console.log(`Web Link: https://s.mcraft.fun/?viewerConnect=${protocol}://${wsDisplayHost}:${WS_PORT}`)
+                console.log(`Web Link: ${websitePreview}/?viewerConnect=${protocol}://${wsDisplayHost}:${WS_PORT}`)
                 if (!options.ssl?.enabled) {
                     console.log('Use SSL cert or tunnel like cloudflared to connect from outside the network')
                 }

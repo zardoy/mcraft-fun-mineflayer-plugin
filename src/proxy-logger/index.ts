@@ -5,7 +5,7 @@ import { handleAuxClientsProxyVanilla } from './vanillaAuxClients'
 const username = process.argv[2] || 'hiall2'
 const connection = process.argv[3] || 'grim.mcraft.fun'
 // const version = process.argv[4] || undefined
-const version = '1.20.6'
+const version = '1.19.4'
 const port = process.argv[5] || undefined
 const [host, serverPort] = connection.split(':')
 

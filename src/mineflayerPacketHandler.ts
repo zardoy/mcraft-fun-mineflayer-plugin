@@ -78,7 +78,16 @@ export class MineflayerPacketHandler {
 
     handleNewConnection(client: ServerClient) {
         if (!this.auxHelpers.lastPackets.login || !this.bot.player) {
-            const reason = `Bot was not logged in yet ${this.loginState}`;
+            let reason = `Bot was not logged in yet ${this.loginState}`;
+            if (!this.bot.player) {
+                reason += `\nMineflayer issue: bot.player is undefined`
+            }
+            if (!this.bot.entity) {
+                reason += `\nMineflayer issue: bot.entity is undefined`
+            }
+            if (!this.auxHelpers.lastPackets.login) {
+                reason += `\nLogin packet was not received`
+            }
             client.writeChannel(CHANNEL_NAME, JSON.stringify({
                 type: 'kick',
                 reason: reason

@@ -209,7 +209,7 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
     })
 
     bot._client.on('login', (packet) => {
-        packetHandler.loginState = ''
+        packetHandler.loginState = 'in-world'
     })
     bot.on('kicked', (reason) => {
         packetHandler.loginState = `Kicked from server: ${reason}`
@@ -218,7 +218,7 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
         packetHandler.loginState ||= `Disconnected from server`
     })
     bot._client.on('respawn', (packet) => {
-        // packetHandler.loginState = 'Bot is respawning'
+        packetHandler.loginState = 'has-respawned'
     })
 
     // send custom channel packets

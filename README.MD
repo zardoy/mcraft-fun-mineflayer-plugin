@@ -33,6 +33,13 @@ bot.loadPlugin(viewerConnector({
     // allowEval: true,
     // forwardChat: true,
 
+    // Enable ssl so you can use it outside of your local network
+    // Note that it doesn't work on Windows without wsl currently (openssl is required)
+    ssl: {
+        enabled: true,
+        selfSigned: true,
+    },
+
     // Optionally disable connection instructions
     // showConnectionInstructions: false,
 }))

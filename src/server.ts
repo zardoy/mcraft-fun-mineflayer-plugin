@@ -63,6 +63,10 @@ export interface MineflayerPluginSettings {
 }
 
 export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPluginSettings) => {
+    if (bot.game?.gameMode !== undefined) {
+        throw new Error('[mcraft-fun-mineflayer] Bot is already in-game. You MUST register the plugin just right after creating the bot, not in login callback')
+    }
+
     if (options.tcpEnabled !== false && options.websocketEnabled !== false) {
         console.log('Starting servers...')
     }
@@ -169,7 +173,8 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
             if (wsServer) {
                 const wsDisplayHost = WS_HOST ?? (!options.ssl?.enabled ? 'localhost' : defaultIp)
                 const protocol = options.ssl?.enabled ? 'wss' : 'ws'
-                console.log(`Web Link: ${websitePreview}/?viewerConnect=${protocol}://${wsDisplayHost}:${WS_PORT}`)
+                const webLink = options.ssl?.enabled ? `https://${wsDisplayHost}:${WS_PORT}` : `${websitePreview}/?viewerConnect=${protocol}://${wsDisplayHost}:${WS_PORT}`
+                console.log(`Web Link: ${webLink}`)
                 if (!options.ssl?.enabled) {
                     console.log('Use SSL cert or tunnel like cloudflared to connect from outside the network')
                 }

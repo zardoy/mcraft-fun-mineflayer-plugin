@@ -2,6 +2,7 @@ import { Socket } from 'net'
 import { WebSocketServer as WsServerCore } from 'ws'
 import ServerDefault from 'minecraft-protocol/src/server'
 import { states, Client } from 'minecraft-protocol'
+import type { MineflayerPluginSettings } from './server'
 
 const clientIgnoredPackets = [
     'position'
@@ -123,13 +124,15 @@ export default class WebsocketServer extends (ServerDefault as any) {
         // eslint-disable-next-line unicorn/no-this-assignment, @typescript-eslint/no-this-alias
         const self = this
         const _socket = webSocket
+        const options: MineflayerPluginSettings = this.options
         const versionData = {
             time: Date.now(),
             version: this.version,
-            replEnabled: this.options.allowEval === true,
-            consoleEnabled: this.options.sendConsole === true,
-            requiresPass: Boolean(this.options.password),
-            forwardChat: this.options.forwardChat === true,
+            replEnabled: options.allowEval === true,
+            consoleEnabled: options.sendConsole === true,
+            requiresPass: Boolean(options.password),
+            forwardChat: options.forwardChat === true,
+            takeoverMode: options.takeoverMode === true,
             apiVersion: -1
             // todo
         }

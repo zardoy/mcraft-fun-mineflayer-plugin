@@ -47,6 +47,14 @@ export type CustomChannelPacketFromClient = {
     id: string
     param: string
     value: number | string | boolean
+} | {
+    type: 'setControlState'
+    control: string
+    value: boolean
+} | {
+    type: 'setLook'
+    yaw: number
+    pitch: number
 }
 
 export type UiLilDef = {

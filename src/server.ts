@@ -60,6 +60,8 @@ export interface MineflayerPluginSettings {
     sendStats?: boolean
     /** @default false */
     forwardChat?: boolean
+    /** @default false */
+    takeoverMode?: boolean
 }
 
 export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPluginSettings) => {
@@ -496,6 +498,14 @@ export const createMineflayerPluginServer = (bot: Bot, options: MineflayerPlugin
                     sendLil(packet.id)
                 }
             }
+        }
+        if (packet.type === 'setControlState') {
+            // todo: do full control override
+            bot.setControlState(packet.control as any, packet.value)
+        }
+
+        if (packet.type === 'setLook') {
+            bot.look(packet.yaw, packet.pitch, true)
         }
     }
 

@@ -77,10 +77,10 @@ export class MineflayerPacketHandler {
     }
 
     handleNewConnection(client: ServerClient) {
-        if (!this.auxHelpers.lastPackets.login || !this.bot.player) {
+        if (!this.auxHelpers.lastPackets.login || !this.bot.entity) {
             let reason = `Bot was not logged in yet ${this.loginState}`;
-            if (!this.bot.player) {
-                reason += `\nMineflayer issue: bot.player is undefined`
+            if (!this.bot.entity) {
+                reason += `\nMineflayer issue: bot.entity is undefined`
             }
             if (!this.bot.entity) {
                 reason += `\nMineflayer issue: bot.entity is undefined`
@@ -98,7 +98,7 @@ export class MineflayerPacketHandler {
 
         this.auxHelpers.onNewAuxConnection(client)
 
-        this.auxHelpers.lastPackets.login.gameMode = this.bot.player.gamemode
+        this.auxHelpers.lastPackets.login.gameMode = this.bot.game.gameMode
 
         this.updateSlot([client])
         this.updateHealth([client])

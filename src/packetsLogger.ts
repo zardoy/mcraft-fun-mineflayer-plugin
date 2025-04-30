@@ -91,6 +91,8 @@ export type ParsedReplayPacket = {
     params: any
     state: string
     diff: number
+    time: number
+    timeParsed: Date
     isFromServer: boolean
 }
 
@@ -170,6 +172,8 @@ export function parseReplayContents(contents: string) {
             params: parsed,
             isFromServer: side!.toUpperCase() === 'S',
             diff: computedDiff,
+            time: timestamp,
+            timeParsed: new Date(timestamp),
         })
     }
 
